@@ -32,7 +32,6 @@
           const data = await api.getNotes({
             per_page: 5
           });
-          // Sesuaikan dengan struktur respons (biasanya { data: [...] })
           state.setState('notes', data.data || data);
         }
         if (state.reminders.length === 0) {
@@ -62,6 +61,17 @@
         state.setState('reminders', remData.data || remData);
         html = Page.reminders();
       } else if (path === '/notes/profile') {
+        // Jika profil belum dimuat, ambil dari server
+        if (!state.user || !state.user.id) {
+          try {
+            const profile = await api.getProfile();
+            state.setState('user', profile);
+          } catch (err) {
+            // Fallback ke Telegram SDK
+            const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+            if (tgUser) state.setState('user', tgUser);
+          }
+        }
         html = Page.profile();
       } else {
         html = Page.home();
@@ -107,7 +117,6 @@
             try {
               await api.deleteNote(id);
               tgApp.showToast('Catatan dihapus', 'success');
-              // Arahkan ke daftar catatan
               window.location.hash = '#/notes/all';
             } catch (err) {
               tgApp.showToast(err.message, 'danger');
@@ -122,7 +131,6 @@
           try {
             await api.completeReminder(id);
             tgApp.showToast('Pengingat selesai', 'success');
-            // Refresh halaman saat ini
             navigateTo(window.location.hash);
           } catch (err) {
             tgApp.showToast(err.message, 'danger');
@@ -145,7 +153,6 @@
         e.preventDefault();
         const form = e.target;
 
-        // Quick capture
         if (form.id === 'quick-capture') {
           const titleInput = form.querySelector('input[name="title"]');
           const title = titleInput.value.trim();
@@ -162,11 +169,9 @@
           }
         }
 
-        // Form catatan (create/edit)
         if (form.id === 'note-form') {
           const formData = new FormData(form);
           const data = Object.fromEntries(formData.entries());
-          // Proses tags
           data.tags = data.tags ? data.tags.split(',').map(t => t.trim()): [];
 
           try {
@@ -177,7 +182,6 @@
               await api.createNote(data);
               tgApp.showToast('Catatan dibuat', 'success');
             }
-            // Kembali ke daftar
             window.location.hash = '#/notes/all';
           } catch (err) {
             tgApp.showToast(err.message, 'danger');
@@ -209,10 +213,23 @@
 
   // ========== Inisialisasi Aplikasi ==========
   async function init() {
-    // Ambil data user Telegram
-    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-    if (tgUser) {
-      state.setState('user', tgUser);
+    // Ambil data profil dari server terlebih dahulu
+    try {
+      const profile = await api.getProfile();
+      state.setState('user',
+        profile);
+    } catch (err) {
+      // Fallback ke Telegram SDK jika gagal
+      const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      if (tgUser) {
+        state.setState('user', {
+          id: tgUser.id,
+          first_name: tgUser.first_name,
+          last_name: tgUser.last_name,
+          username: tgUser.username || null,
+          photo_url: tgUser.photo_url || null
+        });
+      }
     }
 
     // Listener perubahan hash
