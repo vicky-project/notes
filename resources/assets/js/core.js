@@ -63,6 +63,9 @@
       return tgApp.fetchWithAuth(BASE_URL+ `/api/notes/reminders/${id}/complete`, {
         method: 'PATCH'
       });
+    },
+    async getProfile() {
+      return tgApp.fetchWithAuth(BASE_URL + 'api/notes/profile');
     }
   };
 
