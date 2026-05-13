@@ -1,0 +1,33 @@
+{
+  "name": "vicky-project/notes-module",
+  "type": "laravel-module",
+  "description": "Aplikasi pencatatan berbasis web mini app telegram.",
+  "license": "MIT",
+  "authors": [{
+    "name": "Vicky Rahman",
+    "email": "pratamavr@gmail.com"
+  }],
+  "extra": {
+    "laravel": {
+      "providers": [],
+      "aliases": {}
+    }
+  },
+  "require": {
+    "php": "^8.2",
+    "joshbrw/laravel-module-installer": "^1.0",
+    "vicky-project/telegram-module": "^1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Modules\\Notes\\": "app/",
+      "Modules\\Notes\\Database\\Factories\\": "database/factories/",
+      "Modules\\Notes\\Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Modules\\Notes\\Tests\\": "tests/"
+    }
+  }
+}
