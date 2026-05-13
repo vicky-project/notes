@@ -2,7 +2,6 @@
 (function(window) {
   'use strict';
 
-  // Pastikan Core dan Page sudah ada
   if (!window.Core || !window.Page) {
     console.error('Core atau Page tidak ditemukan. Pastikan urutan pemuatan: Core.js -> Page.js -> Main.js');
     return;
@@ -27,7 +26,6 @@
       let html = '';
 
       if (path === '/notes/home') {
-        // Ambil data jika belum ada
         if (state.notes.length === 0) {
           const data = await api.getNotes({
             per_page: 5
@@ -46,7 +44,26 @@
       } else if (path === '/notes/create') {
         state.setState('currentNote', null);
         html = Page.noteForm();
-      } else if (path.startsWith('/notes/') && path.endsWith('/edit')) {
+      }
+      // ---- Rute spesifik didahulukan ----
+      else if (path === '/notes/reminders') {
+        const remData = await api.getReminders();
+        state.setState('reminders', remData.data || remData);
+        html = Page.reminders();
+      } else if (path === '/notes/profile') {
+        if (!state.user || !state.user.id) {
+          try {
+            const profile = await api.getProfile();
+            state.setState('user', profile);
+          } catch (err) {
+            const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+            if (tgUser) state.setState('user', tgUser);
+          }
+        }
+        html = Page.profile();
+      }
+      // ---- Rute generik untuk catatan ----
+      else if (path.startsWith('/notes/') && path.endsWith('/edit')) {
         const id = path.split('/')[2];
         const data = await api.getNote(id);
         state.setState('currentNote', data.data || data);
@@ -56,23 +73,6 @@
         const data = await api.getNote(id);
         state.setState('currentNote', data.data || data);
         html = Page.noteDetail();
-      } else if (path === '/notes/reminders') {
-        const remData = await api.getReminders();
-        state.setState('reminders', remData.data || remData);
-        html = Page.reminders();
-      } else if (path === '/notes/profile') {
-        // Jika profil belum dimuat, ambil dari server
-        if (!state.user || !state.user.id) {
-          try {
-            const profile = await api.getProfile();
-            state.setState('user', profile);
-          } catch (err) {
-            // Fallback ke Telegram SDK
-            const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-            if (tgUser) state.setState('user', tgUser);
-          }
-        }
-        html = Page.profile();
       } else {
         html = Page.home();
       }
@@ -101,7 +101,6 @@
   function setupGlobalEvents() {
     document.body.addEventListener('click',
       async (e) => {
-        // Navigasi internal (hash)
         const anchor = e.target.closest('a');
         if (anchor && anchor.getAttribute('href')?.startsWith('#')) {
           e.preventDefault();
@@ -109,7 +108,6 @@
           return;
         }
 
-        // Tombol hapus catatan
         const deleteBtn = e.target.closest('[data-delete-note]');
         if (deleteBtn) {
           const id = deleteBtn.dataset.deleteNote;
@@ -124,7 +122,6 @@
           }
         }
 
-        // Tombol selesaikan pengingat
         const completeBtn = e.target.closest('[data-complete-reminder]');
         if (completeBtn) {
           const id = completeBtn.dataset.completeReminder;
@@ -137,7 +134,6 @@
           }
         }
 
-        // Tombol logout
         if (e.target.id === 'logout-btn') {
           localStorage.removeItem('telegram_token');
           tgApp.showToast('Logout berhasil', 'success');
@@ -147,7 +143,6 @@
         }
       });
 
-    // Submit form (delegasi)
     document.body.addEventListener('submit',
       async (e) => {
         e.preventDefault();
@@ -189,7 +184,6 @@
         }
       });
 
-    // Pencarian dengan debounce
     const debouncedSearch = helpers.debounce(async (keyword) => {
       try {
         const data = await api.getNotes({
@@ -213,13 +207,11 @@
 
   // ========== Inisialisasi Aplikasi ==========
   async function init() {
-    // Ambil data profil dari server terlebih dahulu
     try {
       const profile = await api.getProfile();
       state.setState('user',
         profile);
     } catch (err) {
-      // Fallback ke Telegram SDK jika gagal
       const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
       if (tgUser) {
         state.setState('user', {
@@ -232,12 +224,10 @@
       }
     }
 
-    // Listener perubahan hash
     window.addEventListener('hashchange', () => {
       navigateTo(window.location.hash);
     });
 
-    // Tentukan rute awal
     if (!window.location.hash) {
       window.location.hash = '#/notes/home';
     } else {
@@ -247,7 +237,6 @@
     setupGlobalEvents();
   }
 
-  // Mulai setelah DOM siap
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
