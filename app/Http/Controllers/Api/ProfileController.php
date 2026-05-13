@@ -2,6 +2,7 @@
 
 namespace Modules\Notes\Http\Controllers\Api;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 
@@ -10,9 +11,9 @@ class ProfileController extends Controller
   /**
   * Menampilkan data profil pengguna yang sedang login.
   */
-  public function show(): JsonResponse
+  public function show(Request $request): JsonResponse
   {
-    $user = auth()->user();
+    $user = $request->user();
 
     return response()->json([
       'id' => $user->telegram_id ?? $user->id,
