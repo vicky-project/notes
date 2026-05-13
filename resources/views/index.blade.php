@@ -19,7 +19,7 @@
 
 {{-- Bottom Navigation --}}
 <nav class="fixed-bottom bg-dark bg-opacity-75 backdrop-blur border-top border-secondary">
-  <div class="d-flex justify-content-around py-2">
+  <div class="d-flex justify-content-around align-items-center py-2">
     <a href="#/notes/home" class="nav-link text-decoration-none text-center" data-route="/notes/home">
       <i class="bi bi-house-door fs-5 d-block"></i>
       <small>Beranda</small>
@@ -27,6 +27,11 @@
     <a href="#/notes/all" class="nav-link text-decoration-none text-center" data-route="/notes/all">
       <i class="bi bi-journals fs-5 d-block"></i>
       <small>Catatan</small>
+    </a>
+    {{-- Tombol + besar di tengah --}}
+    <a href="#/notes/create" class="btn btn-warning rounded-circle shadow-lg d-flex align-items-center justify-content-center"
+      style="width: 60px; height: 60px; margin-top: -30px; z-index: 10;">
+      <i class="bi bi-plus-lg fs-2"></i>
     </a>
     <a href="#/notes/reminders" class="nav-link text-decoration-none text-center" data-route="/notes/reminders">
       <i class="bi bi-bell fs-5 d-block"></i>

@@ -65,9 +65,6 @@
         </div>
         `).join('')}
       </div>
-      <a href="#/notes/create" class="btn btn-warning rounded-circle position-fixed bottom-0 end-0 m-3 shadow-lg" style="width: 56px; height: 56px; z-index: 1030;">
-      <i class="bi bi-plus-lg fs-4"></i>
-      </a>
       `;
     },
 
