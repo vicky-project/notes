@@ -3,6 +3,7 @@ namespace Modules\Notes\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
 use Modules\Notes\Repositories\ReminderRepository;
 use Modules\Notes\Http\Resources\ReminderResource;
 
