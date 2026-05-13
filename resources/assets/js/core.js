@@ -65,7 +65,7 @@
       });
     },
     async getProfile() {
-      return tgApp.fetchWithAuth(BASE_URL + 'api/notes/profile');
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes/profile');
     }
   };
 
