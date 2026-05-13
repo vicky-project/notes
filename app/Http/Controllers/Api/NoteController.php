@@ -35,17 +35,17 @@ class NoteController extends Controller
     return new NoteResource($note);
   }
 
-  public function update(UpdateNoteRequest $request, int $id): NoteResource
+  public function update(UpdateNoteRequest $request, $id): NoteResource
   {
     $user = $request->user();
-    $note = $this->noteService->updateNote($id, $user->id, $request->validated());
+    $note = $this->noteService->updateNote((int) $id, $user->id, $request->validated());
     return new NoteResource($note);
   }
 
-  public function destroy(Request $request, int $id): JsonResponse
+  public function destroy(Request $request, $id): JsonResponse
   {
     $user = $request->user();
-    $this->noteService->deleteNote($id, $user->id);
+    $this->noteService->deleteNote((int) $id, $user->id);
     return response()->json(['message' => 'Catatan dihapus']);
   }
 }
