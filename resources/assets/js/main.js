@@ -1,13 +1,22 @@
-// Main.js - Inisialisasi, routing, event global
+// Main.js - Inisialisasi, routing, event delegation
 (function(window) {
   'use strict';
 
+  // Pastikan Core dan Page sudah ada
+  if (!window.Core || !window.Page) {
+    console.error('Core atau Page tidak ditemukan. Pastikan urutan pemuatan: Core.js -> Page.js -> Main.js');
+    return;
+  }
+
   const {
-    state, api, helpers, tgApp
+    state,
+    api,
+    helpers,
+    tgApp
   } = window.Core;
   const Page = window.Page;
 
-  // ========== Navigasi ==========
+  // ========== Fungsi Navigasi ==========
   async function navigateTo(hash) {
     const path = hash.replace('#', '') || '/notes/home';
     state.setState('activeRoute', path);
@@ -18,10 +27,12 @@
       let html = '';
 
       if (path === '/notes/home') {
+        // Ambil data jika belum ada
         if (state.notes.length === 0) {
           const data = await api.getNotes({
             per_page: 5
           });
+          // Sesuaikan dengan struktur respons (biasanya { data: [...] })
           state.setState('notes', data.data || data);
         }
         if (state.reminders.length === 0) {
@@ -76,7 +87,7 @@
     });
   }
 
-  // ========== Event Delegation ==========
+  // ========== Event Delegasi Global ==========
   function setupGlobalEvents() {
     document.body.addEventListener('click',
       async (e) => {
@@ -88,7 +99,7 @@
           return;
         }
 
-        // Tombol hapus
+        // Tombol hapus catatan
         const deleteBtn = e.target.closest('[data-delete-note]');
         if (deleteBtn) {
           const id = deleteBtn.dataset.deleteNote;
@@ -96,6 +107,7 @@
             try {
               await api.deleteNote(id);
               tgApp.showToast('Catatan dihapus', 'success');
+              // Arahkan ke daftar catatan
               window.location.hash = '#/notes/all';
             } catch (err) {
               tgApp.showToast(err.message, 'danger');
@@ -103,20 +115,21 @@
           }
         }
 
-        // Tombol complete reminder
+        // Tombol selesaikan pengingat
         const completeBtn = e.target.closest('[data-complete-reminder]');
         if (completeBtn) {
           const id = completeBtn.dataset.completeReminder;
           try {
             await api.completeReminder(id);
             tgApp.showToast('Pengingat selesai', 'success');
+            // Refresh halaman saat ini
             navigateTo(window.location.hash);
           } catch (err) {
             tgApp.showToast(err.message, 'danger');
           }
         }
 
-        // Logout
+        // Tombol logout
         if (e.target.id === 'logout-btn') {
           localStorage.removeItem('telegram_token');
           tgApp.showToast('Logout berhasil', 'success');
@@ -126,12 +139,13 @@
         }
       });
 
-    // Submit form
+    // Submit form (delegasi)
     document.body.addEventListener('submit',
       async (e) => {
         e.preventDefault();
         const form = e.target;
 
+        // Quick capture
         if (form.id === 'quick-capture') {
           const titleInput = form.querySelector('input[name="title"]');
           const title = titleInput.value.trim();
@@ -148,9 +162,11 @@
           }
         }
 
+        // Form catatan (create/edit)
         if (form.id === 'note-form') {
           const formData = new FormData(form);
           const data = Object.fromEntries(formData.entries());
+          // Proses tags
           data.tags = data.tags ? data.tags.split(',').map(t => t.trim()): [];
 
           try {
@@ -161,6 +177,7 @@
               await api.createNote(data);
               tgApp.showToast('Catatan dibuat', 'success');
             }
+            // Kembali ke daftar
             window.location.hash = '#/notes/all';
           } catch (err) {
             tgApp.showToast(err.message, 'danger');
@@ -168,7 +185,7 @@
         }
       });
 
-    // Search dengan debounce
+    // Pencarian dengan debounce
     const debouncedSearch = helpers.debounce(async (keyword) => {
       try {
         const data = await api.getNotes({
@@ -198,12 +215,12 @@
       state.setState('user', tgUser);
     }
 
-    // Hash change listener
+    // Listener perubahan hash
     window.addEventListener('hashchange', () => {
       navigateTo(window.location.hash);
     });
 
-    // Rute awal
+    // Tentukan rute awal
     if (!window.location.hash) {
       window.location.hash = '#/notes/home';
     } else {
@@ -213,6 +230,7 @@
     setupGlobalEvents();
   }
 
+  // Mulai setelah DOM siap
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

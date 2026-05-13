@@ -1,9 +1,16 @@
-// Page.js - Render setiap halaman
+// Page.js - Render setiap halaman menggunakan Core state & helpers
 (function(window) {
   'use strict';
 
+  // Pastikan Core sudah dimuat
+  if (!window.Core) {
+    console.error('Core tidak ditemukan. Pastikan Core.js dimuat sebelum Page.js');
+    return;
+  }
+
   const {
-    state, helpers
+    state,
+    helpers
   } = window.Core;
 
   const Page = {
@@ -131,6 +138,7 @@
     }
   };
 
+  // Ekspos ke global
   window.Page = Page;
 
 })(window);

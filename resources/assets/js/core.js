@@ -57,10 +57,10 @@
       });
     },
     async getReminders() {
-      return tgApp.fetchWithAuth(BASE_URL + '/api/reminders');
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes/reminders');
     },
     async completeReminder(id) {
-      return tgApp.fetchWithAuth(BASE_URL+ `/api/reminders/${id}/complete`, {
+      return tgApp.fetchWithAuth(BASE_URL+ `/api/notes/reminders/${id}/complete`, {
         method: 'PATCH'
       });
     }
