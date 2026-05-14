@@ -59,7 +59,11 @@ class NoteService
       throw new ModelNotFoundException('Catatan tidak ditemukan.');
     }
 
-    $tags = $this->parseTags($data['tags'] ?? null);
+    // Hanya proses tags jika ada dalam request
+    $hasTags = array_key_exists('tags', $data);
+    if ($hasTags) {
+      $tags = $this->parseTags($data['tags']);
+    }
     unset($data['tags']);
 
     $reminderAt = $data['reminder_at'] ?? null;
@@ -84,10 +88,14 @@ class NoteService
       // Gabungkan: item baru pertahankan status done jika sebelumnya ada
       $merged = [];
       foreach ($newItems as $item) {
-        $text = is_string($item) ? $item : ($item['text'] ?? '');
-        if (!$text) continue;
-        $done = $item['done'] ?? $oldMap[$text] ?? false;
-        $merged[] = ['text' => $text,
+        if (is_string($item)) {
+          $text = $item;
+          $done = $oldMap[$text] ?? false;
+        } else {
+          $text = $item['text'] ?? '';
+          $done = $item['done'] ?? $oldMap[$text] ?? false;
+        }
+        if ($text) $merged[] = ['text' => $text,
           'done' => $done];
       }
 
@@ -98,7 +106,10 @@ class NoteService
 
     $note = $this->noteRepository->update($note, $data);
 
-    $this->syncTags($note, $tags);
+    // Hanya sync tags jika tags dikirim dalam request
+    if ($hasTags) {
+      $this->syncTags($note, $tags);
+    }
 
     if ($reminderAt) {
       $note->reminder()->updateOrCreate(

@@ -97,9 +97,7 @@
 
   function updateChecklistHidden() {
     const hidden = document.querySelector('input[name="content"][type="hidden"]');
-    if (hidden) hidden.value = JSON.stringify(getChecklistItems().map(text => ({
-      text, done: false
-    })));
+    if (hidden) hidden.value = JSON.stringify(getChecklistItems());
   }
 
   // ---------- Tag ----------
@@ -155,32 +153,37 @@
     }
   }
 
-  // ---------- Form Type ----------
+  // ---------- Form Type (PERBAIKAN) ----------
   function initFormByType(type) {
-    const qw = document.getElementById('quill-wrapper');
-    const cw = document.getElementById('checklist-wrapper');
-    if (!qw || !cw) return;
+    const quillWrapper = document.getElementById('quill-wrapper');
+    const checklistWrapper = document.getElementById('checklist-wrapper');
+    if (!quillWrapper || !checklistWrapper) return;
+
     if (type === 'checklist') {
-      qw.style.display = 'none'; cw.style.display = '';
+      quillWrapper.style.display = 'none';
+      checklistWrapper.style.display = '';
       destroyQuill();
+
       let items = [];
       if (state.currentNote?.content) {
         try {
           items = JSON.parse(state.currentNote.content);
           if (!Array.isArray(items)) items = [];
-        } catch (e) {
-          items = [];
-        }
+        } catch (e) {}
       }
       const container = document.getElementById('checklist-items');
       if (container) {
         container.innerHTML = '';
-        items.forEach(item => addChecklistItem(item.text || item));
+        items.forEach(item => addChecklistItem(typeof item === 'string' ? item: item.text || ''));
       }
       updateChecklistHidden();
     } else {
-      qw.style.display = ''; cw.style.display = 'none';
-      initQuill(state.currentNote?.content || '');
+      quillWrapper.style.display = '';
+      checklistWrapper.style.display = 'none';
+      destroyQuill();
+      setTimeout(() => {
+        initQuill(state.currentNote?.content || '');
+      }, 100);
     }
   }
 
@@ -431,9 +434,7 @@
           if (quill) {
             contentValue = quill.root.innerHTML;
           } else {
-            contentValue = JSON.stringify(getChecklistItems().map(text => ({
-              text, done: false
-            })));
+            contentValue = JSON.stringify(getChecklistItems());
           }
 
           const tagsArray = getTagsFromHidden();
