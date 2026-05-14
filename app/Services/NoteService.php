@@ -49,6 +49,7 @@ class NoteService
     $reminderAt = $data['reminder_at'] ?? null;
     unset($data['reminder_at']);
 
+    $data['content'] = $this->sanitizeContent($data['content'] ?? '');
     $note = $this->noteRepository->create($data);
 
     if (!empty($tags)) {
@@ -78,6 +79,7 @@ class NoteService
     $reminderAt = $data['reminder_at'] ?? null;
     unset($data['reminder_at']);
 
+    $data['content'] = $this->sanitizeContent($data['content'] ?? '');
     $note = $this->noteRepository->update($note, $data);
 
     if (is_array($tags)) {
@@ -131,5 +133,14 @@ class NoteService
     }
 
     $note->tags()->sync($tagIds);
+  }
+
+  private function sanitizeContent(string $html): string
+  {
+    $allowedTags = '<p><br><strong><em><u><s><h1><h2><blockquote><ol><ul><li><a><img><code><pre><span>';
+    $clean = strip_tags($html, $allowedTags);
+    // Hapus event handler sederhana
+    $clean = preg_replace('/ on\w+="[^"]*"/i', '', $clean);
+    return $clean;
   }
 }

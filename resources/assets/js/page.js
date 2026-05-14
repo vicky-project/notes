@@ -97,7 +97,7 @@
       <div class="card glass-card text-white border-0">
       <div class="card-body">
       <h5 class="card-title">${helpers.escapeHtml(note.title)}</h5>
-      <p class="card-text">${helpers.escapeHtml(note.content || '')}</p>
+      <p class="card-text">${note.content || ''}</p>
       <div class="d-flex gap-2 mt-3">
       <a href="#/notes/${note.id}/edit" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> Edit</a>
       <button data-delete-note="${note.id}" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> Hapus</button>
@@ -112,18 +112,14 @@
       const tags = note.tags || [];
       const tagNames = tags.map(t => t.name);
       const reminderAt = note.reminder ? note.reminder.remind_at: '';
-
-      // Format datetime-local (YYYY-MM-DDTHH:MM)
-      const reminderValue = reminderAt
-      ? new Date(reminderAt).toISOString().slice(0, 16): '';
+      const reminderValue = reminderAt ? new Date(reminderAt).toISOString().slice(0, 16): '';
 
       return `
-      <form id="note-form" class="card glass-card text-white border-0 p-3 mb-3">
+      <form id="note-form" class="card glass-card text-white border-0 p-3">
       <div class="mb-3">
       <label class="form-label">Judul</label>
       <input type="text" name="title" value="${helpers.escapeHtml(note.title || '')}" class="form-control glass-input" required>
       </div>
-
       <div class="mb-3">
       <label class="form-label">Tipe Catatan</label>
       <select name="type" class="form-select glass-input">
@@ -131,12 +127,11 @@
       <option value="checklist" ${note.type === 'checklist' ? 'selected': ''}>✅ Checklist</option>
       </select>
       </div>
-
       <div class="mb-3">
       <label class="form-label">Isi</label>
-      <textarea name="content" rows="6" class="form-control glass-input" placeholder="Tulis isi catatan...">${helpers.escapeHtml(note.content || '')}</textarea>
+      <div id="editor-container" style="border-radius: 12px; overflow: hidden;"></div>
+      <input type="hidden" name="content" value="${helpers.escapeHtml(note.content || '')}">
       </div>
-
       <div class="mb-3">
       <label class="form-label">Tag</label>
       <div class="input-group">
@@ -150,18 +145,14 @@
         </span>
         `).join('')}
       </div>
-      <!-- Simpan tag sebagai JSON di hidden input -->
       <input type="hidden" name="tags" value='${JSON.stringify(tagNames)}'>
       </div>
-
       <div class="mb-3">
       <label class="form-label">Pengingat</label>
       <input type="datetime-local" name="reminder_at" value="${reminderValue}" class="form-control glass-input">
       </div>
-
       <button type="submit" class="btn btn-warning w-100">${isEdit ? 'Update': 'Simpan'}</button>
-      </form>
-      `;
+      </form>`;
     },
 
     reminders() {
