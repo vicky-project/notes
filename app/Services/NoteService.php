@@ -4,6 +4,7 @@ namespace Modules\Notes\Services;
 
 use Modules\Notes\Repositories\NoteRepository;
 use Modules\Notes\Repositories\ReminderRepository;
+use Modules\Notes\Enums\NoteType;
 use Modules\Notes\Models\Note;
 use Modules\Notes\Models\Tag;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -15,51 +16,34 @@ class NoteService
     protected ReminderRepository $reminderRepository
   ) {}
 
-  /**
-  * Mendapatkan daftar catatan user dengan filter.
-  */
   public function listNotes(int $telegramUserId, array $filters) {
     return $this->noteRepository->getUserNotes($telegramUserId, $filters);
   }
 
-  /**
-  * Mendapatkan satu catatan berdasarkan ID dan user ID.
-  */
   public function getNote(int $id, int $telegramUserId): Note
   {
     $note = $this->noteRepository->findForUser($id, $telegramUserId);
-
     if (!$note) {
       throw new ModelNotFoundException('Catatan tidak ditemukan.');
     }
-
     return $note;
   }
 
-  /**
-  * Membuat catatan baru beserta tag dan pengingat opsional.
-  */
   public function createNote(int $telegramUserId, array $data): Note
   {
     $data['telegram_user_id'] = $telegramUserId;
 
-    $tags = $data['tags'] ?? [];
+    $tags = $this->parseTags($data['tags'] ?? []);
     unset($data['tags']);
+
     $reminderAt = $data['reminder_at'] ?? null;
     unset($data['reminder_at']);
 
-    // Decode JSON string jika perlu
-    if (is_string($tags)) {
-      $decoded = json_decode($tags, true);
-      $tags = is_array($decoded) ? $decoded : [];
-    } elseif (!is_array($tags)) {
-      $tags = [];
-    }
+    $data['content'] = $this->sanitizeContent($data['content'] ?? '', $data['type'] ?? NoteType::Text->value);
 
-    $data['content'] = $this->sanitizeContent($data['content'] ?? '');
     $note = $this->noteRepository->create($data);
 
-    $this->syncTags($note, $tags); // selalu panggil, meski kosong
+    $this->syncTags($note, $tags);
 
     if ($reminderAt) {
       $note->reminder()->create(['remind_at' => $reminderAt]);
@@ -68,9 +52,6 @@ class NoteService
     return $note->load('tags', 'reminder');
   }
 
-  /**
-  * Memperbarui catatan beserta tag dan pengingat.
-  */
   public function updateNote(int $id, int $telegramUserId, array $data): Note
   {
     $note = $this->noteRepository->findForUser($id, $telegramUserId);
@@ -78,19 +59,14 @@ class NoteService
       throw new ModelNotFoundException('Catatan tidak ditemukan.');
     }
 
-    $tags = $data['tags'] ?? null;
+    $tags = $this->parseTags($data['tags'] ?? null);
     unset($data['tags']);
+
     $reminderAt = $data['reminder_at'] ?? null;
     unset($data['reminder_at']);
 
-    if (is_string($tags)) {
-      $decoded = json_decode($tags, true);
-      $tags = is_array($decoded) ? $decoded : [];
-    } elseif (!is_array($tags)) {
-      $tags = [];
-    }
+    $data['content'] = $this->sanitizeContent($data['content'] ?? $note->content, $data['type'] ?? $note->type);
 
-    $data['content'] = $this->sanitizeContent($data['content'] ?? '');
     $note = $this->noteRepository->update($note, $data);
 
     $this->syncTags($note, $tags);
@@ -105,27 +81,18 @@ class NoteService
     return $note->load('tags', 'reminder');
   }
 
-  /**
-  * Menghapus catatan.
-  */
   public function deleteNote(int $id, int $telegramUserId): void
   {
     $note = $this->noteRepository->findForUser($id, $telegramUserId);
-
     if (!$note) {
       throw new ModelNotFoundException('Catatan tidak ditemukan.');
     }
-
     $this->noteRepository->delete($note);
   }
 
-  /**
-  * Sinkronisasi tag dengan catatan.
-  */
   protected function syncTags(Note $note, array $tagNames): void
   {
     $tagIds = [];
-
     foreach ($tagNames as $name) {
       $name = trim($name);
       if (empty($name)) continue;
@@ -135,20 +102,36 @@ class NoteService
           'telegram_user_id' => $note->telegram_user_id,
           'name' => $name,
         ],
-        ['color' => null] // nanti bisa diganti random color
+        ['color' => null]
       );
-
       $tagIds[] = $tag->id;
     }
-
     $note->tags()->sync($tagIds);
   }
 
-  private function sanitizeContent(string $html): string
+  private function parseTags($tags): array
   {
+    if (is_string($tags)) {
+      $decoded = json_decode($tags, true);
+      return is_array($decoded) ? $decoded : [];
+    }
+    return is_array($tags) ? $tags : [];
+  }
+
+  private function sanitizeContent(string $content, string $type): string
+  {
+    if ($type === NoteType::Checklist->value) {
+      // Validasi JSON, jangan sanitasi HTML
+      $decoded = json_decode($content, true);
+      if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+        return $content;
+      }
+      return '[]'; // fallback
+    }
+
+    // Tipe text: sanitasi HTML
     $allowedTags = '<p><br><strong><em><u><s><h1><h2><blockquote><ol><ul><li><a><img><code><pre><span>';
-    $clean = strip_tags($html, $allowedTags);
-    // Hapus event handler sederhana
+    $clean = strip_tags($content, $allowedTags);
     $clean = preg_replace('/ on\w+="[^"]*"/i', '', $clean);
     return $clean;
   }

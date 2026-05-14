@@ -175,18 +175,32 @@
   function initFormByType(type) {
     const quillWrapper = document.getElementById('quill-wrapper');
     const checklistWrapper = document.getElementById('checklist-wrapper');
-    const hiddenContent = document.querySelector('input[name="content"][type="hidden"]');
     if (!quillWrapper || !checklistWrapper) return;
 
     if (type === 'checklist') {
       quillWrapper.style.display = 'none';
       checklistWrapper.style.display = '';
       destroyQuill();
-      initChecklistFromContent();
+      // Ambil konten dari state (string JSON mentah)
+      let items = [];
+      if (state.currentNote?.content) {
+        try {
+          items = JSON.parse(state.currentNote.content);
+          if (!Array.isArray(items)) items = [];
+        } catch (e) {
+          items = [];
+        }
+      }
+      const container = document.getElementById('checklist-items');
+      if (container) {
+        container.innerHTML = '';
+        items.forEach(item => addChecklistItem(item));
+      }
+      updateChecklistHidden();
     } else {
       quillWrapper.style.display = '';
       checklistWrapper.style.display = 'none';
-      initQuill(hiddenContent?.value || '');
+      initQuill(state.currentNote?.content || '');
     }
   }
 
@@ -267,7 +281,6 @@
 
         // Inisialisasi form jika di halaman create/edit
         if (parsed.full === '/notes/create' || parsed.isEdit) {
-          // Render tag chips
           renderTagChips();
           const typeSelect = document.getElementById('note-type-select');
           const currentType = typeSelect?.value || 'text';
@@ -414,12 +427,14 @@
           submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
           tgApp.showLoading('Menyimpan catatan...');
 
-          // Sinkronisasi konten dari Quill jika aktif
+          // Sinkronisasi konten dari Quill atau checklist
           if (quill) {
             const hiddenContent = form.querySelector('input[name="content"][type="hidden"]');
             if (hiddenContent) hiddenContent.value = quill.root.innerHTML;
+          } else {
+            // Checklist builder sudah sinkron via updateChecklistHidden
+            updateChecklistHidden();
           }
-          // Checklist builder sudah disinkronisasi via updateChecklistHidden() setiap perubahan
 
           const formData = new FormData(form);
           const data = Object.fromEntries(formData.entries());
@@ -436,7 +451,6 @@
             window.location.hash = '#/notes/all';
           } catch (err) {
             tgApp.showToast(err.message, 'danger');
-            // Kembalikan tombol jika gagal
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
           } finally {

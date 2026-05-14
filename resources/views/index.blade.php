@@ -138,6 +138,7 @@
     .ql-editor {
     color: var(--tg-theme-text-color, #e0e0e0);
     font-family: inherit;
+    min-height: 300px;
     }
     .ql-editor.ql-blank::before {
     color: var(--tg-theme-hint-color, rgba(255,255,255,0.5));

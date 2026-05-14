@@ -8,7 +8,6 @@
     return;
   }
 
-  // ========== App State ==========
   const AppState = {
     user: null,
     notes: [],
@@ -22,25 +21,23 @@
       this.listeners.push(fn);
     },
     setState(key, value) {
-      this[key] = value;
-      this.notify();
+      this[key] = value; this.notify();
     },
     notify() {
       this.listeners.forEach(fn => fn(this));
     }
   };
 
-  // ========== API Helper ==========
   const api = {
     async getNotes(params = {}) {
       const query = new URLSearchParams(params).toString();
-      return tgApp.fetchWithAuth(BASE_URL+ `/api/notes?${query}`);
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes?${query}`);
     },
     async getNote(id) {
-      return tgApp.fetchWithAuth(BASE_URL+ `/api/notes/${id}`);
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes/${id}`);
     },
     async createNote(data) {
-      return tgApp.fetchWithAuth(BASE_URL+ '/api/notes', {
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes', {
         method: 'POST',
         body: JSON.stringify(data)
       });
@@ -60,7 +57,7 @@
       return tgApp.fetchWithAuth(BASE_URL + '/api/notes/reminders');
     },
     async completeReminder(id) {
-      return tgApp.fetchWithAuth(BASE_URL+ `/api/notes/reminders/${id}/complete`, {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes/reminders/${id}/complete`, {
         method: 'PATCH'
       });
     },
@@ -69,7 +66,6 @@
     }
   };
 
-  // ========== Helpers ==========
   const helpers = {
     formatDate(dateString) {
       const date = new Date(dateString);
@@ -80,6 +76,9 @@
     escapeHtml(str) {
       return tgApp.escapeHtml(str);
     },
+    stripHtml(html) {
+      return (html || '').replace(/<[^>]*>/g, '');
+    },
     debounce(func, delay) {
       let timeout;
       return function(...args) {
@@ -89,18 +88,13 @@
     },
     uid() {
       return Date.now().toString(36) + Math.random().toString(36).substr(2);
-    },
-    stripHtml(html) {
-      return (html || '').replace(/<[^>]*>/g, '');
     }
   };
 
-  // ========== Ekspos ke global ==========
   window.Core = {
     state: AppState,
     api,
     helpers,
     tgApp
   };
-
 })(window);

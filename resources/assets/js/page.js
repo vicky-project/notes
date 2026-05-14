@@ -1,11 +1,8 @@
-// Page.js - Render setiap halaman menggunakan Core state & helpers
+// Page.js - Render setiap halaman
 (function(window) {
   'use strict';
 
-  if (!window.Core) {
-    console.error('Core tidak ditemukan. Pastikan Core.js dimuat sebelum Page.js');
-    return;
-  }
+  if (!window.Core) return;
 
   const {
     state,
@@ -13,7 +10,6 @@
   } = window.Core;
 
   const Page = {
-    // ========== BERANDA ==========
     home() {
       const recent = state.notes.slice(0, 5);
       const todayReminders = state.reminders.filter(r => {
@@ -23,17 +19,13 @@
         return remindDate.toDateString() === today.toDateString() && !r.is_completed;
       });
 
-      // Fungsi ringkasan konten
       const getSummary = (note) => {
         if (note.type === 'checklist') {
           try {
             const items = JSON.parse(note.content);
-            if (Array.isArray(items)) {
-              return `Checklist: ${items.length} item`;
-            }
+            if (Array.isArray(items)) return `Checklist: ${items.length} item`;
           } catch (e) {}
         }
-        // Untuk tipe text atau fallback
         const plain = helpers.stripHtml(note.content || '');
         return plain ? helpers.escapeHtml(plain.substring(0, 60)) + '...': '';
       };
@@ -78,7 +70,6 @@
       `;
     },
 
-    // ========== DAFTAR CATATAN ==========
     notesList() {
       return `
       <div class="mb-4">
@@ -107,12 +98,10 @@
       `;
     },
 
-    // ========== DETAIL CATATAN ==========
     noteDetail() {
       const note = state.currentNote;
-      if (!note) return `<div class="empty-state"><i class="bi bi-exclamation-circle"></i><p>Catatan tidak ditemukan.</p></div>`;
+      if (!note) return `<div class="empty-state">Catatan tidak ditemukan.</div>`;
 
-      // Render konten sesuai tipe
       let contentHtml = '';
       if (note.type === 'checklist') {
         try {
@@ -133,7 +122,6 @@
           contentHtml = `<p>${helpers.escapeHtml(note.content)}</p>`;
         }
       } else {
-        // Konten HTML dari Quill
         contentHtml = note.content || '';
       }
 
@@ -156,7 +144,6 @@
       `;
     },
 
-    // ========== FORM CREATE/EDIT ==========
     noteForm(mode = 'create', note = {}) {
       const isEdit = mode === 'edit';
       const tags = note.tags || [];
@@ -179,40 +166,23 @@
       </select>
       </div>
 
-      <!-- Editor Quill untuk teks -->
       <div id="quill-wrapper" class="mb-3" style="${isChecklist ? 'display:none;': ''}">
       <label class="form-label">Isi</label>
       <div id="editor-container" style="border-radius: 12px; overflow: hidden;"></div>
       </div>
 
-      <!-- Checklist Builder -->
       <div id="checklist-wrapper" class="mb-3" style="${isChecklist ? '': 'display:none;'}">
       <label class="form-label">Item Checklist</label>
       <div class="input-group mb-2">
       <input type="text" id="checklist-input" class="form-control glass-input" placeholder="Tambah item...">
       <button type="button" id="add-checklist-btn" class="btn btn-outline-warning"><i class="bi bi-plus"></i></button>
       </div>
-      <div id="checklist-items" class="d-flex flex-column gap-1">
-      ${isChecklist && note.content ? (() => {
-        try {
-          const items = JSON.parse(note.content);
-          return items.map(item => `
-            <div class="d-flex align-items-center glass-card p-2 rounded">
-            <span class="checklist-item-text flex-grow-1">${helpers.escapeHtml(item)}</span>
-            <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-checklist-item">&times;</button>
-            </div>
-            `).join('');
-        } catch (e) {
-          return '';
-        }
-      })(): ''}
-      </div>
+      <div id="checklist-items" class="d-flex flex-column gap-1"></div>
       </div>
 
-      <!-- Hidden input untuk content -->
-      <input type="hidden" name="content" value="${helpers.escapeHtml(note.content || '')}">
+      <!-- Hidden input untuk content (jangan diisi dari template) -->
+      <input type="hidden" name="content" value="">
 
-      <!-- Tag -->
       <div class="mb-3">
       <label class="form-label">Tag</label>
       <div class="input-group">
@@ -229,7 +199,6 @@
       <input type="hidden" name="tags" value='${JSON.stringify(tagNames)}'>
       </div>
 
-      <!-- Pengingat -->
       <div class="mb-3">
       <label class="form-label">Pengingat</label>
       <input type="datetime-local" name="reminder_at" value="${reminderValue}" class="form-control glass-input">
@@ -240,7 +209,6 @@
       `;
     },
 
-    // ========== PENGINGAT ==========
     reminders() {
       return `
       <h5 class="mb-3">Pengingat</h5>
@@ -261,7 +229,6 @@
       `;
     },
 
-    // ========== PROFIL ==========
     profile() {
       const user = state.user || {};
       const avatar = user.photo_url
@@ -288,7 +255,5 @@
     }
   };
 
-  // Ekspos ke global
   window.Page = Page;
-
 })(window);
