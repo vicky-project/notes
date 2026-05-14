@@ -43,18 +43,23 @@ class NoteService
   {
     $data['telegram_user_id'] = $telegramUserId;
 
-    // Pisahkan tag dan pengingat dari data
     $tags = $data['tags'] ?? [];
     unset($data['tags']);
     $reminderAt = $data['reminder_at'] ?? null;
     unset($data['reminder_at']);
 
+    // Decode JSON string jika perlu
+    if (is_string($tags)) {
+      $decoded = json_decode($tags, true);
+      $tags = is_array($decoded) ? $decoded : [];
+    } elseif (!is_array($tags)) {
+      $tags = [];
+    }
+
     $data['content'] = $this->sanitizeContent($data['content'] ?? '');
     $note = $this->noteRepository->create($data);
 
-    if (!empty($tags)) {
-      $this->syncTags($note, $tags);
-    }
+    $this->syncTags($note, $tags); // selalu panggil, meski kosong
 
     if ($reminderAt) {
       $note->reminder()->create(['remind_at' => $reminderAt]);
@@ -69,7 +74,6 @@ class NoteService
   public function updateNote(int $id, int $telegramUserId, array $data): Note
   {
     $note = $this->noteRepository->findForUser($id, $telegramUserId);
-
     if (!$note) {
       throw new ModelNotFoundException('Catatan tidak ditemukan.');
     }
@@ -79,12 +83,17 @@ class NoteService
     $reminderAt = $data['reminder_at'] ?? null;
     unset($data['reminder_at']);
 
+    if (is_string($tags)) {
+      $decoded = json_decode($tags, true);
+      $tags = is_array($decoded) ? $decoded : [];
+    } elseif (!is_array($tags)) {
+      $tags = [];
+    }
+
     $data['content'] = $this->sanitizeContent($data['content'] ?? '');
     $note = $this->noteRepository->update($note, $data);
 
-    if (is_array($tags)) {
-      $this->syncTags($note, $tags);
-    }
+    $this->syncTags($note, $tags);
 
     if ($reminderAt) {
       $note->reminder()->updateOrCreate(

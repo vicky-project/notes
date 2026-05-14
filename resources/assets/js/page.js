@@ -23,6 +23,21 @@
         return remindDate.toDateString() === today.toDateString() && !r.is_completed;
       });
 
+      // Fungsi ringkasan konten
+      const getSummary = (note) => {
+        if (note.type === 'checklist') {
+          try {
+            const items = JSON.parse(note.content);
+            if (Array.isArray(items)) {
+              return `Checklist: ${items.length} item`;
+            }
+          } catch (e) {}
+        }
+        // Untuk tipe text atau fallback
+        const plain = helpers.stripHtml(note.content || '');
+        return plain ? helpers.escapeHtml(plain.substring(0, 60)) + '...': '';
+      };
+
       return `
       <div class="mb-4">
       <form id="quick-capture" class="input-group">
@@ -39,7 +54,7 @@
         <a href="#/notes/${note.id}" class="card note-card text-white text-decoration-none h-100">
         <div class="card-body p-2">
         <h6 class="card-title small">${helpers.escapeHtml(note.title)}</h6>
-        ${note.content ? `<p class="card-text text-muted small">${helpers.escapeHtml(note.content.substring(0, 60))}...</p>`: ''}
+        ${note.content ? `<p class="card-text text-muted small">${getSummary(note)}</p>`: ''}
         </div>
         </a>
         </div>
@@ -201,7 +216,7 @@
       <div class="mb-3">
       <label class="form-label">Tag</label>
       <div class="input-group">
-      <input type="text" name="tags" id="tag-input" class="form-control glass-input" placeholder="Ketik tag lalu koma atau Enter" autocomplete="off">
+      <input type="text" id="tag-input" class="form-control glass-input" placeholder="Ketik tag lalu koma atau Enter" autocomplete="off">
       </div>
       <div id="tag-chips" class="d-flex flex-wrap gap-1 mt-2">
       ${tagNames.map(name => `
