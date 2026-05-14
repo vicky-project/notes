@@ -201,7 +201,7 @@
       <div class="mb-3">
       <label class="form-label">Tag</label>
       <div class="input-group">
-      <input type="text" id="tag-input" class="form-control glass-input" placeholder="Ketik tag lalu koma atau Enter" autocomplete="off">
+      <input type="text" name="tags" id="tag-input" class="form-control glass-input" placeholder="Ketik tag lalu koma atau Enter" autocomplete="off">
       </div>
       <div id="tag-chips" class="d-flex flex-wrap gap-1 mt-2">
       ${tagNames.map(name => `
