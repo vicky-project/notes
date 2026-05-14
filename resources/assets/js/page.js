@@ -23,7 +23,11 @@
         if (note.type === 'checklist') {
           try {
             const items = JSON.parse(note.content);
-            if (Array.isArray(items)) return `Checklist: ${items.length} item`;
+            if (Array.isArray(items)) {
+              const total = items.length;
+              const done = items.filter(i => i.done).length;
+              return `Checklist: ${done}/${total} selesai`;
+            }
           } catch (e) {}
         }
         const plain = helpers.stripHtml(note.content || '');
@@ -109,12 +113,16 @@
           if (Array.isArray(items)) {
             contentHtml = `
             <div class="checklist-readonly">
-            ${items.map(item => `
-              <div class="d-flex align-items-center mb-2">
-              <i class="bi bi-square me-2"></i>
-              <span>${helpers.escapeHtml(item)}</span>
+            ${items.map((item, index) => {
+              const text = item.text || item;
+              const done = item.done || false;
+              return `
+              <div class="d-flex align-items-center mb-2 checklist-item-row" data-index="${index}">
+              <i class="bi ${done ? 'bi-check-square-fill text-success': 'bi-square'} me-2 checklist-toggle" style="cursor:pointer; font-size: 1.2rem;"></i>
+              <span class="${done ? 'text-decoration-line-through text-muted': ''}">${helpers.escapeHtml(text)}</span>
               </div>
-              `).join('')}
+              `;
+            }).join('')}
             </div>
             `;
           }
@@ -180,7 +188,6 @@
       <div id="checklist-items" class="d-flex flex-column gap-1"></div>
       </div>
 
-      <!-- Hidden input untuk content (jangan diisi dari template) -->
       <input type="hidden" name="content" value="">
 
       <div class="mb-3">

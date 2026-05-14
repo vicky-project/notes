@@ -1,9 +1,9 @@
-// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist (tag fix)
+// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist (final)
 (function(window) {
   'use strict';
 
   if (!window.Core || !window.Page) {
-    console.error('Core atau Page tidak ditemukan. Pastikan urutan pemuatan: Core.js -> Page.js -> Main.js');
+    console.error('Core atau Page tidak ditemukan.');
     return;
   }
 
@@ -15,14 +15,11 @@
   } = window.Core;
   const Page = window.Page;
 
-  // ========== Quill Instance ==========
   let quill = null;
 
-  // ========== Utility Functions ==========
   function extractData(response) {
     return response?.data || response;
   }
-
   function parsePath(hash) {
     const path = hash.replace('#', '') || '/notes/home';
     const parts = path.split('/').filter(Boolean);
@@ -33,12 +30,11 @@
     };
   }
 
-  // ========== Quill Management ==========
+  // ---------- Quill ----------
   function initQuill(initialContent = '') {
     destroyQuill();
     const container = document.getElementById('editor-container');
     if (!container) return;
-
     quill = new Quill('#editor-container', {
       theme: 'snow',
       placeholder: 'Tulis isi catatan di sini...',
@@ -59,9 +55,7 @@
         ]
       }
     });
-
     if (initialContent) quill.root.innerHTML = initialContent;
-
     quill.on('text-change', () => {
       const hidden = document.querySelector('input[name="content"][type="hidden"]');
       if (hidden) hidden.value = quill.root.innerHTML;
@@ -78,25 +72,21 @@
     }
   }
 
-  // ========== Checklist Builder ==========
+  // ---------- Checklist ----------
   function getChecklistItems() {
     const container = document.getElementById('checklist-items');
     if (!container) return [];
-    const items = [];
-    container.querySelectorAll('.checklist-item-text').forEach(el => items.push(el.textContent.trim()));
-    return items;
+    return [...container.querySelectorAll('.checklist-item-text')].map(el => el.textContent.trim());
   }
 
   function addChecklistItem(text) {
     const container = document.getElementById('checklist-items');
     if (!container || !text) return;
-    const itemDiv = document.createElement('div');
-    itemDiv.className = 'd-flex align-items-center glass-card p-2 rounded mb-2';
-    itemDiv.innerHTML = `
-    <span class="checklist-item-text flex-grow-1">${helpers.escapeHtml(text)}</span>
-    <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-checklist-item">&times;</button>
-    `;
-    container.appendChild(itemDiv);
+    const div = document.createElement('div');
+    div.className = 'd-flex align-items-center glass-card p-2 rounded mb-2';
+    div.innerHTML = `<span class="checklist-item-text flex-grow-1">${helpers.escapeHtml(text)}</span>
+    <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-checklist-item">&times;</button>`;
+    container.appendChild(div);
     updateChecklistHidden();
   }
 
@@ -107,12 +97,12 @@
 
   function updateChecklistHidden() {
     const hidden = document.querySelector('input[name="content"][type="hidden"]');
-    if (hidden) {
-      hidden.value = JSON.stringify(getChecklistItems());
-    }
+    if (hidden) hidden.value = JSON.stringify(getChecklistItems().map(text => ({
+      text, done: false
+    })));
   }
 
-  // ========== Tag Chips ==========
+  // ---------- Tag ----------
   function getTagsFromHidden() {
     const hidden = document.querySelector('input[name="tags"][type="hidden"]');
     if (!hidden) return [];
@@ -135,7 +125,7 @@
     chips.innerHTML = tags.map(name => `
       <span class="badge bg-secondary d-flex align-items-center">
       ${helpers.escapeHtml(name)}
-      <button type="button" class="btn-close btn-close-white ms-1" style="font-size: 0.5rem;" data-remove-tag="${helpers.escapeHtml(name)}"></button>
+      <button type="button" class="btn-close btn-close-white ms-1" style="font-size:0.5rem;" data-remove-tag="${helpers.escapeHtml(name)}"></button>
       </span>
       `).join('');
   }
@@ -150,36 +140,28 @@
   }
 
   function removeTag(name) {
-    let tags = getTagsFromHidden();
-    tags = tags.filter(t => t !== name);
+    let tags = getTagsFromHidden().filter(t => t !== name);
     setTagsToHidden(tags);
     renderTagChips();
   }
 
-  /** Simpan tag yang masih ada di input teks ke dalam hidden input */
   function commitPendingTag() {
     const input = document.getElementById('tag-input');
     if (!input) return;
-    const value = input.value.trim();
+    const value = input.value.trim().replace(/,/g, '').trim();
     if (value) {
-      // Bersihkan koma
-      const cleanValue = value.replace(/,/g, '').trim();
-      if (cleanValue) {
-        addTag(cleanValue);
-      }
+      addTag(value);
       input.value = '';
     }
   }
 
-  // ========== Form Type Switcher ==========
+  // ---------- Form Type ----------
   function initFormByType(type) {
-    const quillWrapper = document.getElementById('quill-wrapper');
-    const checklistWrapper = document.getElementById('checklist-wrapper');
-    if (!quillWrapper || !checklistWrapper) return;
-
+    const qw = document.getElementById('quill-wrapper');
+    const cw = document.getElementById('checklist-wrapper');
+    if (!qw || !cw) return;
     if (type === 'checklist') {
-      quillWrapper.style.display = 'none';
-      checklistWrapper.style.display = '';
+      qw.style.display = 'none'; cw.style.display = '';
       destroyQuill();
       let items = [];
       if (state.currentNote?.content) {
@@ -193,17 +175,16 @@
       const container = document.getElementById('checklist-items');
       if (container) {
         container.innerHTML = '';
-        items.forEach(item => addChecklistItem(item));
+        items.forEach(item => addChecklistItem(item.text || item));
       }
       updateChecklistHidden();
     } else {
-      quillWrapper.style.display = '';
-      checklistWrapper.style.display = 'none';
+      qw.style.display = ''; cw.style.display = 'none';
       initQuill(state.currentNote?.content || '');
     }
   }
 
-  // ========== Routing & Render ==========
+  // ---------- Routing ----------
   async function renderRoute(parsed) {
     const {
       full,
@@ -211,7 +192,6 @@
       isEdit
     } = parsed;
     let html = '';
-
     if (full === '/notes/home') {
       if (state.notes.length === 0) {
         const data = await api.getNotes({
@@ -259,16 +239,13 @@
     } else {
       html = Page.home();
     }
-
     return html;
   }
 
   async function navigateTo(hash) {
     const parsed = parsePath(hash);
     state.setState('activeRoute', parsed.full);
-
     tgApp.showLoading('Memuat...');
-
     try {
       const html = await renderRoute(parsed);
       const content = document.getElementById('app-content');
@@ -277,8 +254,6 @@
         content.innerHTML = html;
         content.classList.remove('page-loading');
         updateActiveNav(parsed.full);
-
-        // Inisialisasi form jika di halaman create/edit
         if (parsed.full === '/notes/create' || parsed.isEdit) {
           renderTagChips();
           const typeSelect = document.getElementById('note-type-select');
@@ -308,7 +283,7 @@
     });
   }
 
-  // ========== Global Event Delegation ==========
+  // ---------- Events ----------
   function setupGlobalEvents() {
     document.body.addEventListener('click',
       async (e) => {
@@ -319,7 +294,6 @@
           window.location.hash = anchor.getAttribute('href');
           return;
         }
-
         // Hapus catatan
         const deleteBtn = e.target.closest('[data-delete-note]');
         if (deleteBtn) {
@@ -334,7 +308,6 @@
             }
           }
         }
-
         // Selesaikan pengingat
         const completeBtn = e.target.closest('[data-complete-reminder]');
         if (completeBtn) {
@@ -347,14 +320,12 @@
             tgApp.showToast(err.message, 'danger');
           }
         }
-
         // Hapus tag
         const removeBtn = e.target.closest('[data-remove-tag]');
         if (removeBtn) {
           e.preventDefault();
           removeTag(removeBtn.dataset.removeTag);
         }
-
         // Tambah checklist item
         if (e.target.id === 'add-checklist-btn') {
           e.preventDefault();
@@ -362,44 +333,74 @@
           if (input) {
             const text = input.value.trim();
             if (text) {
-              addChecklistItem(text);
-              input.value = '';
-              input.focus();
+              addChecklistItem(text); input.value = ''; input.focus();
             }
           }
         }
-
         // Hapus checklist item
         if (e.target.classList.contains('remove-checklist-item')) {
           e.preventDefault();
           removeChecklistItem(e.target);
         }
-
+        // Toggle checklist di detail
+        const toggleCheck = e.target.closest('.checklist-toggle');
+        if (toggleCheck) {
+          e.preventDefault();
+          const row = toggleCheck.closest('.checklist-item-row');
+          if (!row) return;
+          const index = parseInt(row.dataset.index, 10);
+          const note = state.currentNote;
+          if (!note || note.type !== 'checklist') return;
+          try {
+            const items = JSON.parse(note.content);
+            if (index >= 0 && index < items.length) {
+              const item = items[index];
+              const text = item.text || item;
+              const newDone = !item.done;
+              items[index] = {
+                text,
+                done: newDone
+              };
+              state.setState('currentNote', {
+                ...note, content: JSON.stringify(items)
+              });
+              const icon = row.querySelector('.checklist-toggle');
+              const span = row.querySelector('span');
+              if (newDone) {
+                icon.classList.remove('bi-square');
+                icon.classList.add('bi-check-square-fill', 'text-success');
+                span.classList.add('text-decoration-line-through', 'text-muted');
+              } else {
+                icon.classList.remove('bi-check-square-fill', 'text-success');
+                icon.classList.add('bi-square');
+                span.classList.remove('text-decoration-line-through', 'text-muted');
+              }
+              api.updateNote(note.id, {
+                content: JSON.stringify(items), type: 'checklist'
+              })
+              .catch(err => tgApp.showToast('Gagal menyimpan: ' + err.message, 'danger'));
+            }
+          } catch (err) {
+            tgApp.showToast('Data checklist rusak', 'danger');
+          }
+        }
         // Logout
         if (e.target.id === 'logout-btn') {
           localStorage.removeItem('telegram_token');
           tgApp.showToast('Logout berhasil', 'success');
-          if (window.Telegram?.WebApp) {
-            window.Telegram.WebApp.close();
-          }
+          if (window.Telegram?.WebApp) window.Telegram.WebApp.close();
         }
       });
 
-    // Change tipe catatan
     document.body.addEventListener('change',
       (e) => {
-        if (e.target.id === 'note-type-select') {
-          initFormByType(e.target.value);
-        }
+        if (e.target.id === 'note-type-select') initFormByType(e.target.value);
       });
 
-    // Submit form
     document.body.addEventListener('submit',
       async (e) => {
         e.preventDefault();
         const form = e.target;
-
-        // Quick capture
         if (form.id === 'quick-capture') {
           const titleInput = form.querySelector('input[name="title"]');
           const title = titleInput?.value.trim();
@@ -417,8 +418,6 @@
             tgApp.showToast(err.message, 'danger');
           }
         }
-
-        // Form catatan (create/edit)
         if (form.id === 'note-form') {
           const submitBtn = form.querySelector('button[type="submit"]');
           const originalText = submitBtn.innerHTML;
@@ -426,19 +425,18 @@
           submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
           tgApp.showLoading('Menyimpan catatan...');
 
-          // Simpan tag yang masih di input
           commitPendingTag();
 
-          // Dapatkan content dari Quill atau checklist
           let contentValue = '';
           if (quill) {
             contentValue = quill.root.innerHTML;
           } else {
-            contentValue = JSON.stringify(getChecklistItems());
+            contentValue = JSON.stringify(getChecklistItems().map(text => ({
+              text, done: false
+            })));
           }
 
           const tagsArray = getTagsFromHidden();
-
           const data = {
             title: form.querySelector('input[name="title"]').value.trim(),
             type: form.querySelector('select[name="type"]').value,
@@ -466,7 +464,6 @@
         }
       });
 
-    // Pencarian dengan debounce
     const debouncedSearch = helpers.debounce(async (keyword) => {
       try {
         const data = await api.getNotes({
@@ -482,12 +479,9 @@
 
     document.body.addEventListener('input',
       (e) => {
-        if (e.target.id === 'search-notes') {
-          debouncedSearch(e.target.value);
-        }
+        if (e.target.id === 'search-notes') debouncedSearch(e.target.value);
       });
 
-    // Tag input: koma atau Enter
     document.body.addEventListener('keydown',
       (e) => {
         if (e.target.id === 'tag-input') {
@@ -499,7 +493,6 @@
       });
   }
 
-  // ========== Inisialisasi Aplikasi ==========
   async function init() {
     try {
       const profile = await api.getProfile();
@@ -517,15 +510,12 @@
         });
       }
     }
-
     window.addEventListener('hashchange', () => navigateTo(window.location.hash));
-
     if (!window.location.hash) {
       window.location.hash = '#/notes/home';
     } else {
       await navigateTo(window.location.hash);
     }
-
     setupGlobalEvents();
   }
 
@@ -534,5 +524,4 @@
   } else {
     init();
   }
-
 })(window);

@@ -65,7 +65,36 @@ class NoteService
     $reminderAt = $data['reminder_at'] ?? null;
     unset($data['reminder_at']);
 
-    $data['content'] = $this->sanitizeContent($data['content'] ?? $note->content, $data['type'] ?? $note->type);
+    $type = $data['type'] ?? $note->type;
+    $content = $data['content'] ?? $note->content;
+
+    // Jika checklist, lakukan merge item lama & baru
+    if ($type === 'checklist') {
+      $oldItems = json_decode($note->content, true) ?: [];
+      $newItems = json_decode($content, true) ?: [];
+
+      // Buat map dari item lama (text => done)
+      $oldMap = [];
+      foreach ($oldItems as $old) {
+        $text = is_string($old) ? $old : ($old['text'] ?? '');
+        $done = is_array($old) ? ($old['done'] ?? false) : false;
+        if ($text) $oldMap[$text] = $done;
+      }
+
+      // Gabungkan: item baru pertahankan status done jika sebelumnya ada
+      $merged = [];
+      foreach ($newItems as $item) {
+        $text = is_string($item) ? $item : ($item['text'] ?? '');
+        if (!$text) continue;
+        $done = $item['done'] ?? $oldMap[$text] ?? false;
+        $merged[] = ['text' => $text,
+          'done' => $done];
+      }
+
+      $data['content'] = json_encode($merged);
+    } else {
+      $data['content'] = $this->sanitizeContent($content, $type);
+    }
 
     $note = $this->noteRepository->update($note, $data);
 
@@ -124,15 +153,28 @@ class NoteService
       // Validasi JSON, jangan sanitasi HTML
       $decoded = json_decode($content, true);
       if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-        return $content;
+        // Normalisasi setiap item ke {text, done}
+        $normalized = array_map(function($item) {
+          if (is_string($item)) return ['text' => $item,
+            'done' => false];
+          return [
+            'text' => $item['text'] ?? '',
+            'done' => $item['done'] ?? false
+          ];
+        },
+          $decoded);
+        return json_encode($normalized);
       }
-      return '[]'; // fallback
+      return '[]';
     }
 
     // Tipe text: sanitasi HTML
     $allowedTags = '<p><br><strong><em><u><s><h1><h2><blockquote><ol><ul><li><a><img><code><pre><span>';
-    $clean = strip_tags($content, $allowedTags);
-    $clean = preg_replace('/ on\w+="[^"]*"/i', '', $clean);
+    $clean = strip_tags($content,
+      $allowedTags);
+    $clean = preg_replace('/ on\w+="[^"]*"/i',
+      '',
+      $clean);
     return $clean;
   }
 }
