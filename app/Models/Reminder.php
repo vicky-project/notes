@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Reminder extends Model
 {
-  protected $table = 'notes_reminder';
+  protected $table = 'notes_reminders';
 
   protected $fillable = ['note_id',
     'remind_at',
