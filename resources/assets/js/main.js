@@ -90,9 +90,9 @@
     document.querySelectorAll('.nav-link').forEach(link => {
       const route = link.dataset.route;
       if (path.startsWith(route)) {
-        link.classList.add('text-warning');
+        link.classList.add('active-link', 'text-warning');
       } else {
-        link.classList.remove('text-warning');
+        link.classList.remove('active-link', 'text-warning');
       }
     });
   }
