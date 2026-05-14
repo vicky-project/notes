@@ -48,6 +48,7 @@
 
     quill = new Quill('#editor-container', {
       theme: 'snow',
+      placeholder: 'Tulis disini....',
       modules: {
         toolbar: [
           ['bold', 'italic', 'underline', 'strike'],
