@@ -98,6 +98,60 @@
     });
   }
 
+  function updateTagChips() {
+    const chipsContainer = document.getElementById('tag-chips');
+    const hiddenInput = document.querySelector('input[name="tags"][type="hidden"]');
+    if (!chipsContainer || !hiddenInput) return;
+
+    let tags = [];
+    try {
+      tags = JSON.parse(hiddenInput.value);
+    } catch(e) {
+      tags = [];
+    }
+
+    chipsContainer.innerHTML = tags.map(name => `
+      <span class="badge bg-secondary d-flex align-items-center">
+      ${helpers.escapeHtml(name)}
+      <button type="button" class="btn-close btn-close-white ms-1" style="font-size: 0.5rem;" data-remove-tag="${helpers.escapeHtml(name)}"></button>
+      </span>
+      `).join('');
+  }
+
+  function addTag(name) {
+    const hiddenInput = document.querySelector('input[name="tags"][type="hidden"]');
+    if (!hiddenInput) return;
+
+    let tags = [];
+    try {
+      tags = JSON.parse(hiddenInput.value);
+    } catch(e) {
+      tags = [];
+    }
+
+    if (!tags.includes(name)) {
+      tags.push(name);
+      hiddenInput.value = JSON.stringify(tags);
+      updateTagChips();
+    }
+  }
+
+  function removeTag(name) {
+    const hiddenInput = document.querySelector('input[name="tags"][type="hidden"]');
+    if (!hiddenInput) return;
+
+    let tags = [];
+    try {
+      tags = JSON.parse(hiddenInput.value);
+    } catch(e) {
+      tags = [];
+    }
+
+    tags = tags.filter(t => t !== name);
+    hiddenInput.value = JSON.stringify(tags);
+    updateTagChips();
+  }
+
   function setupGlobalEvents() {
     document.body.addEventListener('click',
       async (e) => {
@@ -132,6 +186,13 @@
           } catch (err) {
             tgApp.showToast(err.message, 'danger');
           }
+        }
+
+        const removeBtn = e.target.closest('[data-remove-tag]');
+        if (removeBtn) {
+          e.preventDefault();
+          const name = removeBtn.dataset.removeTag;
+          removeTag(name);
         }
 
         if (e.target.id === 'logout-btn') {
@@ -169,7 +230,15 @@
         if (form.id === 'note-form') {
           const formData = new FormData(form);
           const data = Object.fromEntries(formData.entries());
-          data.tags = data.tags ? data.tags.split(',').map(t => t.trim()): [];
+
+          // Parse tags dari hidden input (bukan dari input teks)
+          let tags = [];
+          try {
+            tags = JSON.parse(data.tags);
+          } catch(e) {
+            tags = [];
+          }
+          data.tags = tags;
 
           try {
             if (state.currentNote && state.currentNote.id) {
@@ -203,6 +272,21 @@
       (e) => {
         if (e.target.id === 'search-notes') {
           debouncedSearch(e.target.value);
+        }
+      });
+
+    // Tag input: tekan koma atau Enter untuk menambah tag
+    document.body.addEventListener('keydown',
+      (e) => {
+        if (e.target.id === 'tag-input') {
+          if (e.key === ',' || e.key === 'Enter') {
+            e.preventDefault();
+            const value = e.target.value.trim().replace(/,/g, '');
+            if (value) {
+              addTag(value);
+              e.target.value = '';
+            }
+          }
         }
       });
   }

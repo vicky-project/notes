@@ -109,20 +109,56 @@
 
     noteForm(mode = 'create', note = {}) {
       const isEdit = mode === 'edit';
+      const tags = note.tags || [];
+      const tagNames = tags.map(t => t.name);
+      const reminderAt = note.reminder ? note.reminder.remind_at: '';
+
+      // Format datetime-local (YYYY-MM-DDTHH:MM)
+      const reminderValue = reminderAt
+      ? new Date(reminderAt).toISOString().slice(0, 16): '';
+
       return `
       <form id="note-form" class="card glass-card text-white border-0 p-3">
       <div class="mb-3">
       <label class="form-label">Judul</label>
       <input type="text" name="title" value="${helpers.escapeHtml(note.title || '')}" class="form-control glass-input" required>
       </div>
+
+      <div class="mb-3">
+      <label class="form-label">Tipe Catatan</label>
+      <select name="type" class="form-select glass-input">
+      <option value="text" ${note.type === 'text' || !note.type ? 'selected': ''}>📝 Teks</option>
+      <option value="checklist" ${note.type === 'checklist' ? 'selected': ''}>✅ Checklist</option>
+      </select>
+      </div>
+
       <div class="mb-3">
       <label class="form-label">Isi</label>
-      <textarea name="content" rows="5" class="form-control glass-input">${helpers.escapeHtml(note.content || '')}</textarea>
+      <textarea name="content" rows="6" class="form-control glass-input" placeholder="Tulis isi catatan...">${helpers.escapeHtml(note.content || '')}</textarea>
       </div>
+
       <div class="mb-3">
-      <label class="form-label">Tag (pisahkan koma)</label>
-      <input type="text" name="tags" value="${(note.tags || []).map(t => t.name).join(', ')}" class="form-control glass-input">
+      <label class="form-label">Tag</label>
+      <div class="input-group">
+      <input type="text" id="tag-input" class="form-control glass-input" placeholder="Ketik tag lalu koma atau Enter" autocomplete="off">
       </div>
+      <div id="tag-chips" class="d-flex flex-wrap gap-1 mt-2">
+      ${tagNames.map(name => `
+        <span class="badge bg-secondary d-flex align-items-center" data-tag-name="${helpers.escapeHtml(name)}">
+        ${helpers.escapeHtml(name)}
+        <button type="button" class="btn-close btn-close-white ms-1" style="font-size: 0.5rem;" data-remove-tag="${helpers.escapeHtml(name)}"></button>
+        </span>
+        `).join('')}
+      </div>
+      <!-- Simpan tag sebagai JSON di hidden input -->
+      <input type="hidden" name="tags" value='${JSON.stringify(tagNames)}'>
+      </div>
+
+      <div class="mb-3">
+      <label class="form-label">Pengingat</label>
+      <input type="datetime-local" name="reminder_at" value="${reminderValue}" class="form-control glass-input">
+      </div>
+
       <button type="submit" class="btn btn-warning w-100">${isEdit ? 'Update': 'Simpan'}</button>
       </form>
       `;
