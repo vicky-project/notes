@@ -1,9 +1,9 @@
-// Main.js - Inisialisasi, routing, event delegation
+// Main.js - Inisialisasi, routing, event delegation (diperbaiki)
 (function(window) {
   'use strict';
 
   if (!window.Core || !window.Page) {
-    console.error('Core atau Page tidak ditemukan. Pastikan urutan pemuatan: Core.js -> Page.js -> Main.js');
+    console.error('Core atau Page tidak ditemukan.');
     return;
   }
 
@@ -15,7 +15,6 @@
   } = window.Core;
   const Page = window.Page;
 
-  // ========== Fungsi Navigasi ==========
   async function navigateTo(hash) {
     const path = hash.replace('#', '') || '/notes/home';
     state.setState('activeRoute', path);
@@ -44,9 +43,7 @@
       } else if (path === '/notes/create') {
         state.setState('currentNote', null);
         html = Page.noteForm();
-      }
-      // ---- Rute spesifik didahulukan ----
-      else if (path === '/notes/reminders') {
+      } else if (path === '/notes/reminders') {
         const remData = await api.getReminders();
         state.setState('reminders', remData.data || remData);
         html = Page.reminders();
@@ -61,9 +58,7 @@
           }
         }
         html = Page.profile();
-      }
-      // ---- Rute generik untuk catatan ----
-      else if (path.startsWith('/notes/') && path.endsWith('/edit')) {
+      } else if (path.startsWith('/notes/') && path.endsWith('/edit')) {
         const id = path.split('/')[2];
         const data = await api.getNote(id);
         state.setState('currentNote', data.data || data);
@@ -77,8 +72,14 @@
         html = Page.home();
       }
 
-      document.getElementById('app-content').innerHTML = html;
-      updateActiveNav(path);
+      // Transisi
+      const content = document.getElementById('app-content');
+      content.classList.add('page-loading');
+      setTimeout(() => {
+        content.innerHTML = html;
+        content.classList.remove('page-loading');
+        updateActiveNav(path);
+      }, 80);
     } catch (error) {
       tgApp.showToast(error.message, 'danger');
     } finally {
@@ -97,7 +98,6 @@
     });
   }
 
-  // ========== Event Delegasi Global ==========
   function setupGlobalEvents() {
     document.body.addEventListener('click',
       async (e) => {
@@ -153,9 +153,11 @@
           const title = titleInput.value.trim();
           if (!title) return;
           try {
-            await api.createNote({
+            const newNote = await api.createNote({
               title
             });
+            const noteData = newNote.data || newNote;
+            state.setState('notes', [noteData, ...state.notes]);
             form.reset();
             tgApp.showToast('Catatan tersimpan', 'success');
             navigateTo('#/notes/home');
@@ -205,7 +207,6 @@
       });
   }
 
-  // ========== Inisialisasi Aplikasi ==========
   async function init() {
     try {
       const profile = await api.getProfile();
