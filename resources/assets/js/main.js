@@ -1,4 +1,4 @@
-// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist (final fix)
+// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist (final fix menumpuk)
 (function(window) {
   'use strict';
 
@@ -33,18 +33,28 @@
     };
   }
 
-  // ========== Quill Management ==========
+  // ========== Quill Management (PERBAIKAN TUMPUK) ==========
+  function destroyQuill() {
+    if (quill) {
+      // Hapus toolbar Quill yang mungkin masih tersisa
+      const toolbar = document.querySelector('.ql-toolbar');
+      if (toolbar) toolbar.remove();
+      // Kosongkan container editor
+      const container = document.getElementById('editor-container');
+      if (container) {
+        container.innerHTML = '';
+      }
+      quill = null;
+    }
+  }
+
   function initQuill(initialContent = '') {
+    // Pastikan tidak ada instance sebelumnya
+    destroyQuill();
+
     const container = document.getElementById('editor-container');
     if (!container) return;
 
-    // Hancurkan instance sebelumnya & bersihkan container
-    if (quill) {
-      container.innerHTML = '';
-      quill = null;
-    }
-
-    // Inisialisasi Quill baru
     quill = new Quill('#editor-container', {
       theme: 'snow',
       placeholder: 'Tulis isi catatan di sini...',
@@ -72,14 +82,6 @@
       const hidden = document.querySelector('input[name="content"][type="hidden"]');
       if (hidden) hidden.value = quill.root.innerHTML;
     });
-  }
-
-  function destroyQuill() {
-    if (quill) {
-      const container = document.getElementById('editor-container');
-      if (container) container.innerHTML = '';
-      quill = null;
-    }
   }
 
   // ========== Checklist Builder ==========
@@ -179,7 +181,7 @@
     if (type === 'checklist') {
       quillWrapper.style.display = 'none';
       checklistWrapper.style.display = '';
-      destroyQuill();
+      destroyQuill(); // Hancurkan Quill saat pindah ke checklist
 
       let items = [];
       if (state.currentNote?.content) {
@@ -197,11 +199,8 @@
     } else {
       quillWrapper.style.display = '';
       checklistWrapper.style.display = 'none';
-      destroyQuill();
-      // Tunggu sebentar agar wrapper terlihat dan dimensi container terukur
-      setTimeout(() => {
-        initQuill(state.currentNote?.content || '');
-      }, 100);
+      // Pindah ke teks: initQuill akan memanggil destroyQuill() dulu, lalu inisialisasi baru
+      initQuill(state.currentNote?.content || '');
     }
   }
 
@@ -402,7 +401,6 @@
                 ...note, content: JSON.stringify(items)
               });
 
-              // Update DOM lokal
               const icon = row.querySelector('.checklist-toggle');
               const span = row.querySelector('span');
               if (newDone) {
@@ -415,7 +413,6 @@
                 span.classList.remove('text-decoration-line-through', 'text-muted');
               }
 
-              // Kirim ke server (hanya content & type, tanpa tags)
               api.updateNote(note.id, {
                 content: JSON.stringify(items), type: 'checklist'
               })
@@ -436,7 +433,6 @@
         }
       });
 
-    // Change tipe catatan
     document.body.addEventListener('change',
       (e) => {
         if (e.target.id === 'note-type-select') {
@@ -444,13 +440,11 @@
         }
       });
 
-    // Submit form
     document.body.addEventListener('submit',
       async (e) => {
         e.preventDefault();
         const form = e.target;
 
-        // Quick capture
         if (form.id === 'quick-capture') {
           const titleInput = form.querySelector('input[name="title"]');
           const title = titleInput?.value.trim();
@@ -469,7 +463,6 @@
           }
         }
 
-        // Form catatan (create/edit)
         if (form.id === 'note-form') {
           const submitBtn = form.querySelector('button[type="submit"]');
           const originalText = submitBtn.innerHTML;
@@ -515,7 +508,6 @@
         }
       });
 
-    // Pencarian dengan debounce
     const debouncedSearch = helpers.debounce(async (keyword) => {
       try {
         const data = await api.getNotes({
@@ -536,7 +528,6 @@
         }
       });
 
-    // Tag input: koma atau Enter
     document.body.addEventListener('keydown',
       (e) => {
         if (e.target.id === 'tag-input') {
