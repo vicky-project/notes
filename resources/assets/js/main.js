@@ -1,4 +1,4 @@
-// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist (dirapikan & diperbaiki)
+// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist (tag fix)
 (function(window) {
   'use strict';
 
@@ -112,21 +112,6 @@
     }
   }
 
-  function initChecklistFromContent() {
-    const hidden = document.querySelector('input[name="content"][type="hidden"]');
-    const container = document.getElementById('checklist-items');
-    if (!container || !hidden) return;
-    container.innerHTML = '';
-    try {
-      const items = JSON.parse(hidden.value);
-      if (Array.isArray(items)) {
-        items.forEach(item => addChecklistItem(item));
-      }
-    } catch (e) {
-      // bukan JSON, kosongkan
-    }
-  }
-
   // ========== Tag Chips ==========
   function getTagsFromHidden() {
     const hidden = document.querySelector('input[name="tags"][type="hidden"]');
@@ -171,6 +156,21 @@
     renderTagChips();
   }
 
+  /** Simpan tag yang masih ada di input teks ke dalam hidden input */
+  function commitPendingTag() {
+    const input = document.getElementById('tag-input');
+    if (!input) return;
+    const value = input.value.trim();
+    if (value) {
+      // Bersihkan koma
+      const cleanValue = value.replace(/,/g, '').trim();
+      if (cleanValue) {
+        addTag(cleanValue);
+      }
+      input.value = '';
+    }
+  }
+
   // ========== Form Type Switcher ==========
   function initFormByType(type) {
     const quillWrapper = document.getElementById('quill-wrapper');
@@ -181,7 +181,6 @@
       quillWrapper.style.display = 'none';
       checklistWrapper.style.display = '';
       destroyQuill();
-      // Ambil konten dari state (string JSON mentah)
       let items = [];
       if (state.currentNote?.content) {
         try {
@@ -427,18 +426,26 @@
           submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
           tgApp.showLoading('Menyimpan catatan...');
 
-          // Sinkronisasi konten dari Quill atau checklist
+          // Simpan tag yang masih di input
+          commitPendingTag();
+
+          // Dapatkan content dari Quill atau checklist
+          let contentValue = '';
           if (quill) {
-            const hiddenContent = form.querySelector('input[name="content"][type="hidden"]');
-            if (hiddenContent) hiddenContent.value = quill.root.innerHTML;
+            contentValue = quill.root.innerHTML;
           } else {
-            // Checklist builder sudah sinkron via updateChecklistHidden
-            updateChecklistHidden();
+            contentValue = JSON.stringify(getChecklistItems());
           }
 
-          const formData = new FormData(form);
-          const data = Object.fromEntries(formData.entries());
-          data.tags = getTagsFromHidden();
+          const tagsArray = getTagsFromHidden();
+
+          const data = {
+            title: form.querySelector('input[name="title"]').value.trim(),
+            type: form.querySelector('select[name="type"]').value,
+            content: contentValue,
+            tags: tagsArray,
+            reminder_at: form.querySelector('input[name="reminder_at"]').value || null
+          };
 
           try {
             if (state.currentNote?.id) {
@@ -486,11 +493,7 @@
         if (e.target.id === 'tag-input') {
           if (e.key === ',' || e.key === 'Enter') {
             e.preventDefault();
-            const value = e.target.value.trim().replace(/,/g, '');
-            if (value) {
-              addTag(value);
-              e.target.value = '';
-            }
+            commitPendingTag();
           }
         }
       });
