@@ -115,7 +115,7 @@
       const reminderValue = reminderAt ? new Date(reminderAt).toISOString().slice(0, 16): '';
 
       return `
-      <form id="note-form" class="card glass-card text-white border-0 p-3">
+      <form id="note-form" class="card glass-card text-white border-0 p-3 mb-3">
       <div class="mb-3">
       <label class="form-label">Judul</label>
       <input type="text" name="title" value="${helpers.escapeHtml(note.title || '')}" class="form-control glass-input" required>
