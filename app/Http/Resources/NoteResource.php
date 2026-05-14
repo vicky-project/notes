@@ -15,7 +15,14 @@ class NoteResource extends JsonResource
       'metadata' => $this->metadata,
       'created_at' => $this->created_at->toIso8601String(),
       'updated_at' => $this->updated_at->toIso8601String(),
-      'tags' => $this->whenLoaded('tags', fn() => $this->tags->makeHidden('pivot')),
+      'tags' => $this->whenLoaded('tags', function () {
+        return $this->tags->map(fn($tag) => [
+          'id' => $tag->id,
+          'name' => $tag->name,
+          'color' => $tag->color,
+        ]);
+      }) ?? [],
+      // fallback array kosong jika tidak diload
       'reminder' => new ReminderResource($this->whenLoaded('reminder')),
     ];
   }

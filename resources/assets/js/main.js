@@ -1,4 +1,4 @@
-// Main.js - Inisialisasi, routing, event delegation, Quill (dirapikan)
+// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist (dirapikan & diperbaiki)
 (function(window) {
   'use strict';
 
@@ -19,36 +19,29 @@
   let quill = null;
 
   // ========== Utility Functions ==========
-
-  /** Ambil data dari response API (dukung paginasi & biasa) */
   function extractData(response) {
     return response?.data || response;
   }
 
-  /** Parse hash menjadi rute dan parameter */
   function parsePath(hash) {
     const path = hash.replace('#', '') || '/notes/home';
-    const parts = path.split('/').filter(Boolean); // ['notes', ...]
+    const parts = path.split('/').filter(Boolean);
     return {
       full: '/' + parts.join('/'),
-      route: '/' + parts.join('/'),
       parts,
       isEdit: path.endsWith('/edit')
     };
   }
 
   // ========== Quill Management ==========
-
   function initQuill(initialContent = '') {
-    // Bersihkan instance sebelumnya
     destroyQuill();
-
     const container = document.getElementById('editor-container');
     if (!container) return;
 
     quill = new Quill('#editor-container', {
       theme: 'snow',
-      placeholder: 'Tulis disini....',
+      placeholder: 'Tulis isi catatan di sini...',
       modules: {
         toolbar: [
           ['bold', 'italic', 'underline', 'strike'],
@@ -67,9 +60,7 @@
       }
     });
 
-    if (initialContent) {
-      quill.root.innerHTML = initialContent;
-    }
+    if (initialContent) quill.root.innerHTML = initialContent;
 
     quill.on('text-change', () => {
       const hidden = document.querySelector('input[name="content"][type="hidden"]');
@@ -87,134 +78,56 @@
     }
   }
 
-  // ========== Route Rendering ==========
-
-  /**
-  * Siapkan state & render halaman sesuai rute.
-  * Mengembalikan HTML string.
-  */
-  async function renderRoute(parsed) {
-    const {
-      full,
-      parts,
-      isEdit
-    } = parsed;
-    let html = '';
-
-    // Halaman Beranda
-    if (full === '/notes/home') {
-      if (state.notes.length === 0) {
-        const data = await api.getNotes({
-          per_page: 5
-        });
-        state.setState('notes', extractData(data));
-      }
-      if (state.reminders.length === 0) {
-        const remData = await api.getReminders();
-        state.setState('reminders', extractData(remData));
-      }
-      html = Page.home();
-    }
-    // Daftar semua catatan
-    else if (full === '/notes/all') {
-      const data = await api.getNotes();
-      state.setState('notes', extractData(data));
-      html = Page.notesList();
-    }
-    // Form catatan baru
-    else if (full === '/notes/create') {
-      state.setState('currentNote', null);
-      html = Page.noteForm();
-    }
-    // Halaman pengingat
-    else if (full === '/notes/reminders') {
-      const remData = await api.getReminders();
-      state.setState('reminders', extractData(remData));
-      html = Page.reminders();
-    }
-    // Halaman profil
-    else if (full === '/notes/profile') {
-      if (!state.user || !state.user.id) {
-        try {
-          const profile = await api.getProfile();
-          state.setState('user', profile);
-        } catch (err) {
-          const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-          if (tgUser) state.setState('user', tgUser);
-        }
-      }
-      html = Page.profile();
-    }
-    // Edit catatan
-    else if (isEdit && parts.length >= 2) {
-      const id = parts[1]; // '/notes/123/edit' -> parts[1] = '123'
-      const data = await api.getNote(id);
-      state.setState('currentNote', extractData(data));
-      html = Page.noteForm('edit', state.currentNote);
-    }
-    // Detail catatan
-    else if (parts.length >= 2) {
-      const id = parts[1];
-      const data = await api.getNote(id);
-      state.setState('currentNote', extractData(data));
-      html = Page.noteDetail();
-    }
-    // Fallback
-    else {
-      html = Page.home();
-    }
-
-    return html;
+  // ========== Checklist Builder ==========
+  function getChecklistItems() {
+    const container = document.getElementById('checklist-items');
+    if (!container) return [];
+    const items = [];
+    container.querySelectorAll('.checklist-item-text').forEach(el => items.push(el.textContent.trim()));
+    return items;
   }
 
-  // ========== Navigasi ==========
+  function addChecklistItem(text) {
+    const container = document.getElementById('checklist-items');
+    if (!container || !text) return;
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'd-flex align-items-center glass-card p-2 rounded mb-2';
+    itemDiv.innerHTML = `
+    <span class="checklist-item-text flex-grow-1">${helpers.escapeHtml(text)}</span>
+    <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-checklist-item">&times;</button>
+    `;
+    container.appendChild(itemDiv);
+    updateChecklistHidden();
+  }
 
-  async function navigateTo(hash) {
-    const parsed = parsePath(hash);
-    state.setState('activeRoute', parsed.full);
+  function removeChecklistItem(button) {
+    button.closest('.d-flex').remove();
+    updateChecklistHidden();
+  }
 
-    tgApp.showLoading('Memuat...');
+  function updateChecklistHidden() {
+    const hidden = document.querySelector('input[name="content"][type="hidden"]');
+    if (hidden) {
+      hidden.value = JSON.stringify(getChecklistItems());
+    }
+  }
 
+  function initChecklistFromContent() {
+    const hidden = document.querySelector('input[name="content"][type="hidden"]');
+    const container = document.getElementById('checklist-items');
+    if (!container || !hidden) return;
+    container.innerHTML = '';
     try {
-      const html = await renderRoute(parsed);
-
-      const content = document.getElementById('app-content');
-      content.classList.add('page-loading');
-      setTimeout(() => {
-        content.innerHTML = html;
-        content.classList.remove('page-loading');
-        updateActiveNav(parsed.full);
-
-        // Inisialisasi Quill jika di form
-        if (parsed.full === '/notes/create' || parsed.isEdit) {
-          const hidden = document.querySelector('input[name="content"][type="hidden"]');
-          initQuill(hidden?.value || '');
-        } else {
-          destroyQuill();
-        }
-      },
-        80);
-    } catch (error) {
-      tgApp.showToast(error.message,
-        'danger');
-    } finally {
-      tgApp.hideLoading();
-    }
-  }
-
-  function updateActiveNav(path) {
-    document.querySelectorAll('.nav-link').forEach(link => {
-      const route = link.dataset.route;
-      if (path.startsWith(route)) {
-        link.classList.add('active-link', 'text-warning');
-      } else {
-        link.classList.remove('active-link', 'text-warning');
+      const items = JSON.parse(hidden.value);
+      if (Array.isArray(items)) {
+        items.forEach(item => addChecklistItem(item));
       }
-    });
+    } catch (e) {
+      // bukan JSON, kosongkan
+    }
   }
 
   // ========== Tag Chips ==========
-
   function getTagsFromHidden() {
     const hidden = document.querySelector('input[name="tags"][type="hidden"]');
     if (!hidden) return [];
@@ -258,65 +171,217 @@
     renderTagChips();
   }
 
-  // ========== Global Event Delegation ==========
+  // ========== Form Type Switcher ==========
+  function initFormByType(type) {
+    const quillWrapper = document.getElementById('quill-wrapper');
+    const checklistWrapper = document.getElementById('checklist-wrapper');
+    const hiddenContent = document.querySelector('input[name="content"][type="hidden"]');
+    if (!quillWrapper || !checklistWrapper) return;
 
-  function setupGlobalEvents() {
-    // Klik delegasi
-    document.body.addEventListener('click', async (e) => {
-      // Navigasi hash
-      const anchor = e.target.closest('a');
-      if (anchor && anchor.getAttribute('href')?.startsWith('#')) {
-        e.preventDefault();
-        window.location.hash = anchor.getAttribute('href');
-        return;
+    if (type === 'checklist') {
+      quillWrapper.style.display = 'none';
+      checklistWrapper.style.display = '';
+      destroyQuill();
+      initChecklistFromContent();
+    } else {
+      quillWrapper.style.display = '';
+      checklistWrapper.style.display = 'none';
+      initQuill(hiddenContent?.value || '');
+    }
+  }
+
+  // ========== Routing & Render ==========
+  async function renderRoute(parsed) {
+    const {
+      full,
+      parts,
+      isEdit
+    } = parsed;
+    let html = '';
+
+    if (full === '/notes/home') {
+      if (state.notes.length === 0) {
+        const data = await api.getNotes({
+          per_page: 5
+        });
+        state.setState('notes', extractData(data));
       }
+      if (state.reminders.length === 0) {
+        const remData = await api.getReminders();
+        state.setState('reminders', extractData(remData));
+      }
+      html = Page.home();
+    } else if (full === '/notes/all') {
+      const data = await api.getNotes();
+      state.setState('notes', extractData(data));
+      html = Page.notesList();
+    } else if (full === '/notes/create') {
+      state.setState('currentNote', null);
+      html = Page.noteForm();
+    } else if (full === '/notes/reminders') {
+      const remData = await api.getReminders();
+      state.setState('reminders', extractData(remData));
+      html = Page.reminders();
+    } else if (full === '/notes/profile') {
+      if (!state.user || !state.user.id) {
+        try {
+          const profile = await api.getProfile();
+          state.setState('user', profile);
+        } catch (err) {
+          const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+          if (tgUser) state.setState('user', tgUser);
+        }
+      }
+      html = Page.profile();
+    } else if (isEdit && parts.length >= 2) {
+      const id = parts[1];
+      const data = await api.getNote(id);
+      state.setState('currentNote', extractData(data));
+      html = Page.noteForm('edit', state.currentNote);
+    } else if (parts.length >= 2) {
+      const id = parts[1];
+      const data = await api.getNote(id);
+      state.setState('currentNote', extractData(data));
+      html = Page.noteDetail();
+    } else {
+      html = Page.home();
+    }
 
-      // Hapus catatan
-      const deleteBtn = e.target.closest('[data-delete-note]');
-      if (deleteBtn) {
-        const id = deleteBtn.dataset.deleteNote;
-        if (confirm('Hapus catatan ini?')) {
+    return html;
+  }
+
+  async function navigateTo(hash) {
+    const parsed = parsePath(hash);
+    state.setState('activeRoute', parsed.full);
+
+    tgApp.showLoading('Memuat...');
+
+    try {
+      const html = await renderRoute(parsed);
+      const content = document.getElementById('app-content');
+      content.classList.add('page-loading');
+      setTimeout(() => {
+        content.innerHTML = html;
+        content.classList.remove('page-loading');
+        updateActiveNav(parsed.full);
+
+        // Inisialisasi form jika di halaman create/edit
+        if (parsed.full === '/notes/create' || parsed.isEdit) {
+          // Render tag chips
+          renderTagChips();
+          const typeSelect = document.getElementById('note-type-select');
+          const currentType = typeSelect?.value || 'text';
+          initFormByType(currentType);
+        } else {
+          destroyQuill();
+        }
+      },
+        80);
+    } catch (error) {
+      tgApp.showToast(error.message,
+        'danger');
+    } finally {
+      tgApp.hideLoading();
+    }
+  }
+
+  function updateActiveNav(path) {
+    document.querySelectorAll('.nav-link').forEach(link => {
+      const route = link.dataset.route;
+      if (path.startsWith(route)) {
+        link.classList.add('active-link', 'text-warning');
+      } else {
+        link.classList.remove('active-link', 'text-warning');
+      }
+    });
+  }
+
+  // ========== Global Event Delegation ==========
+  function setupGlobalEvents() {
+    document.body.addEventListener('click',
+      async (e) => {
+        // Navigasi hash
+        const anchor = e.target.closest('a');
+        if (anchor && anchor.getAttribute('href')?.startsWith('#')) {
+          e.preventDefault();
+          window.location.hash = anchor.getAttribute('href');
+          return;
+        }
+
+        // Hapus catatan
+        const deleteBtn = e.target.closest('[data-delete-note]');
+        if (deleteBtn) {
+          const id = deleteBtn.dataset.deleteNote;
+          if (confirm('Hapus catatan ini?')) {
+            try {
+              await api.deleteNote(id);
+              tgApp.showToast('Catatan dihapus', 'success');
+              window.location.hash = '#/notes/all';
+            } catch (err) {
+              tgApp.showToast(err.message, 'danger');
+            }
+          }
+        }
+
+        // Selesaikan pengingat
+        const completeBtn = e.target.closest('[data-complete-reminder]');
+        if (completeBtn) {
+          const id = completeBtn.dataset.completeReminder;
           try {
-            await api.deleteNote(id);
-            tgApp.showToast('Catatan dihapus', 'success');
-            window.location.hash = '#/notes/all';
+            await api.completeReminder(id);
+            tgApp.showToast('Pengingat selesai', 'success');
+            navigateTo(window.location.hash);
           } catch (err) {
             tgApp.showToast(err.message, 'danger');
           }
         }
-      }
 
-      // Selesaikan pengingat
-      const completeBtn = e.target.closest('[data-complete-reminder]');
-      if (completeBtn) {
-        const id = completeBtn.dataset.completeReminder;
-        try {
-          await api.completeReminder(id);
-          tgApp.showToast('Pengingat selesai', 'success');
-          navigateTo(window.location.hash);
-        } catch (err) {
-          tgApp.showToast(err.message, 'danger');
+        // Hapus tag
+        const removeBtn = e.target.closest('[data-remove-tag]');
+        if (removeBtn) {
+          e.preventDefault();
+          removeTag(removeBtn.dataset.removeTag);
         }
-      }
 
-      // Hapus tag
-      const removeBtn = e.target.closest('[data-remove-tag]');
-      if (removeBtn) {
-        e.preventDefault();
-        removeTag(removeBtn.dataset.removeTag);
-      }
-
-      // Logout
-      if (e.target.id === 'logout-btn') {
-        localStorage.removeItem('telegram_token');
-        tgApp.showToast('Logout berhasil', 'success');
-        if (window.Telegram?.WebApp) {
-          window.Telegram.WebApp.close();
+        // Tambah checklist item
+        if (e.target.id === 'add-checklist-btn') {
+          e.preventDefault();
+          const input = document.getElementById('checklist-input');
+          if (input) {
+            const text = input.value.trim();
+            if (text) {
+              addChecklistItem(text);
+              input.value = '';
+              input.focus();
+            }
+          }
         }
-      }
-    });
 
-    // Submit delegasi
+        // Hapus checklist item
+        if (e.target.classList.contains('remove-checklist-item')) {
+          e.preventDefault();
+          removeChecklistItem(e.target);
+        }
+
+        // Logout
+        if (e.target.id === 'logout-btn') {
+          localStorage.removeItem('telegram_token');
+          tgApp.showToast('Logout berhasil', 'success');
+          if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.close();
+          }
+        }
+      });
+
+    // Change tipe catatan
+    document.body.addEventListener('change',
+      (e) => {
+        if (e.target.id === 'note-type-select') {
+          initFormByType(e.target.value);
+        }
+      });
+
+    // Submit form
     document.body.addEventListener('submit',
       async (e) => {
         e.preventDefault();
@@ -343,15 +408,22 @@
 
         // Form catatan (create/edit)
         if (form.id === 'note-form') {
-          // Sinkronisasi Quill
+          const submitBtn = form.querySelector('button[type="submit"]');
+          const originalText = submitBtn.innerHTML;
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+          tgApp.showLoading('Menyimpan catatan...');
+
+          // Sinkronisasi konten dari Quill jika aktif
           if (quill) {
-            const hidden = form.querySelector('input[name="content"][type="hidden"]');
-            if (hidden) hidden.value = quill.root.innerHTML;
+            const hiddenContent = form.querySelector('input[name="content"][type="hidden"]');
+            if (hiddenContent) hiddenContent.value = quill.root.innerHTML;
           }
+          // Checklist builder sudah disinkronisasi via updateChecklistHidden() setiap perubahan
 
           const formData = new FormData(form);
           const data = Object.fromEntries(formData.entries());
-          data.tags = getTagsFromHidden(); // gunakan helper
+          data.tags = getTagsFromHidden();
 
           try {
             if (state.currentNote?.id) {
@@ -364,6 +436,11 @@
             window.location.hash = '#/notes/all';
           } catch (err) {
             tgApp.showToast(err.message, 'danger');
+            // Kembalikan tombol jika gagal
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+          } finally {
+            tgApp.hideLoading();
           }
         }
       });
@@ -389,7 +466,7 @@
         }
       });
 
-    // Tag input (keydown)
+    // Tag input: koma atau Enter
     document.body.addEventListener('keydown',
       (e) => {
         if (e.target.id === 'tag-input') {
@@ -407,7 +484,6 @@
 
   // ========== Inisialisasi Aplikasi ==========
   async function init() {
-    // Ambil profil
     try {
       const profile = await api.getProfile();
       state.setState('user',
@@ -425,10 +501,8 @@
       }
     }
 
-    // Event listener
     window.addEventListener('hashchange', () => navigateTo(window.location.hash));
 
-    // Inisialisasi rute pertama
     if (!window.location.hash) {
       window.location.hash = '#/notes/home';
     } else {
@@ -438,7 +512,6 @@
     setupGlobalEvents();
   }
 
-  // Mulai setelah DOM siap
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

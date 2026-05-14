@@ -8,7 +8,7 @@ class NoteRepository
 {
   public function getUserNotes(int $telegramUserId, array $filters = []): LengthAwarePaginator
   {
-    return Note::where('telegram_user_id', $telegramUserId)
+    return Note::with(['tags', 'reminder'])->where('telegram_user_id', $telegramUserId)
     ->when(isset($filters['tag']), function ($q) use ($filters) {
       $q->whereHas('tags', fn($q) => $q->where('name', $filters['tag']));
     })
@@ -24,7 +24,7 @@ class NoteRepository
 
   public function findForUser(int $id, int $telegramUserId): ?Note
   {
-    return Note::where('id', $id)->where('telegram_user_id', $telegramUserId)->first();
+    return Note::with(['tags', 'reminder'])->where('id', $id)->where('telegram_user_id', $telegramUserId)->first();
   }
 
   public function create(array $data): Note

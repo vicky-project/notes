@@ -13,6 +13,7 @@
   } = window.Core;
 
   const Page = {
+    // ========== BERANDA ==========
     home() {
       const recent = state.notes.slice(0, 5);
       const todayReminders = state.reminders.filter(r => {
@@ -62,6 +63,7 @@
       `;
     },
 
+    // ========== DAFTAR CATATAN ==========
     notesList() {
       return `
       <div class="mb-4">
@@ -90,14 +92,46 @@
       `;
     },
 
+    // ========== DETAIL CATATAN ==========
     noteDetail() {
       const note = state.currentNote;
       if (!note) return `<div class="empty-state"><i class="bi bi-exclamation-circle"></i><p>Catatan tidak ditemukan.</p></div>`;
+
+      // Render konten sesuai tipe
+      let contentHtml = '';
+      if (note.type === 'checklist') {
+        try {
+          const items = JSON.parse(note.content);
+          if (Array.isArray(items)) {
+            contentHtml = `
+            <div class="checklist-readonly">
+            ${items.map(item => `
+              <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-square me-2"></i>
+              <span>${helpers.escapeHtml(item)}</span>
+              </div>
+              `).join('')}
+            </div>
+            `;
+          }
+        } catch (e) {
+          contentHtml = `<p>${helpers.escapeHtml(note.content)}</p>`;
+        }
+      } else {
+        // Konten HTML dari Quill
+        contentHtml = note.content || '';
+      }
+
       return `
       <div class="card glass-card text-white border-0">
       <div class="card-body">
       <h5 class="card-title">${helpers.escapeHtml(note.title)}</h5>
-      <p class="card-text">${note.content || ''}</p>
+      <div class="card-text">${contentHtml}</div>
+      ${note.tags?.length ? `
+      <div class="d-flex flex-wrap gap-1 mt-3">
+      ${note.tags.map(tag => `<span class="badge bg-secondary">${helpers.escapeHtml(tag.name)}</span>`).join('')}
+      </div>
+      `: ''}
       <div class="d-flex gap-2 mt-3">
       <a href="#/notes/${note.id}/edit" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> Edit</a>
       <button data-delete-note="${note.id}" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> Hapus</button>
@@ -107,31 +141,63 @@
       `;
     },
 
+    // ========== FORM CREATE/EDIT ==========
     noteForm(mode = 'create', note = {}) {
       const isEdit = mode === 'edit';
       const tags = note.tags || [];
       const tagNames = tags.map(t => t.name);
       const reminderAt = note.reminder ? note.reminder.remind_at: '';
       const reminderValue = reminderAt ? new Date(reminderAt).toISOString().slice(0, 16): '';
+      const isChecklist = note.type === 'checklist';
 
       return `
-      <form id="note-form" class="card glass-card text-white border-0 p-3 mb-3">
+      <form id="note-form" class="card glass-card text-white border-0 p-3">
       <div class="mb-3">
       <label class="form-label">Judul</label>
       <input type="text" name="title" value="${helpers.escapeHtml(note.title || '')}" class="form-control glass-input" required>
       </div>
       <div class="mb-3">
       <label class="form-label">Tipe Catatan</label>
-      <select name="type" class="form-select glass-input">
-      <option value="text" ${note.type === 'text' || !note.type ? 'selected': ''}>📝 Teks</option>
-      <option value="checklist" ${note.type === 'checklist' ? 'selected': ''}>✅ Checklist</option>
+      <select name="type" id="note-type-select" class="form-select glass-input">
+      <option value="text" ${!isChecklist ? 'selected': ''}>📝 Teks</option>
+      <option value="checklist" ${isChecklist ? 'selected': ''}>✅ Checklist</option>
       </select>
       </div>
-      <div class="mb-3">
+
+      <!-- Editor Quill untuk teks -->
+      <div id="quill-wrapper" class="mb-3" style="${isChecklist ? 'display:none;': ''}">
       <label class="form-label">Isi</label>
       <div id="editor-container" style="border-radius: 12px; overflow: hidden;"></div>
-      <input type="hidden" name="content" value="${helpers.escapeHtml(note.content || '')}">
       </div>
+
+      <!-- Checklist Builder -->
+      <div id="checklist-wrapper" class="mb-3" style="${isChecklist ? '': 'display:none;'}">
+      <label class="form-label">Item Checklist</label>
+      <div class="input-group mb-2">
+      <input type="text" id="checklist-input" class="form-control glass-input" placeholder="Tambah item...">
+      <button type="button" id="add-checklist-btn" class="btn btn-outline-warning"><i class="bi bi-plus"></i></button>
+      </div>
+      <div id="checklist-items" class="d-flex flex-column gap-1">
+      ${isChecklist && note.content ? (() => {
+        try {
+          const items = JSON.parse(note.content);
+          return items.map(item => `
+            <div class="d-flex align-items-center glass-card p-2 rounded">
+            <span class="checklist-item-text flex-grow-1">${helpers.escapeHtml(item)}</span>
+            <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-checklist-item">&times;</button>
+            </div>
+            `).join('');
+        } catch (e) {
+          return '';
+        }
+      })(): ''}
+      </div>
+      </div>
+
+      <!-- Hidden input untuk content -->
+      <input type="hidden" name="content" value="${helpers.escapeHtml(note.content || '')}">
+
+      <!-- Tag -->
       <div class="mb-3">
       <label class="form-label">Tag</label>
       <div class="input-group">
@@ -147,14 +213,19 @@
       </div>
       <input type="hidden" name="tags" value='${JSON.stringify(tagNames)}'>
       </div>
+
+      <!-- Pengingat -->
       <div class="mb-3">
       <label class="form-label">Pengingat</label>
       <input type="datetime-local" name="reminder_at" value="${reminderValue}" class="form-control glass-input">
       </div>
+
       <button type="submit" class="btn btn-warning w-100">${isEdit ? 'Update': 'Simpan'}</button>
-      </form>`;
+      </form>
+      `;
     },
 
+    // ========== PENGINGAT ==========
     reminders() {
       return `
       <h5 class="mb-3">Pengingat</h5>
@@ -175,15 +246,14 @@
       `;
     },
 
+    // ========== PROFIL ==========
     profile() {
       const user = state.user || {};
       const avatar = user.photo_url
       ? `<img src="${helpers.escapeHtml(user.photo_url)}" class="rounded-circle" width="80" height="80" style="object-fit: cover;">`: `<i class="bi bi-person-circle fs-1"></i>`;
       return `
       <div class="text-center mb-4">
-      <div class="profile-avatar mx-auto">
-      ${avatar}
-      </div>
+      <div class="profile-avatar mx-auto">${avatar}</div>
       <h5 class="mt-2">${helpers.escapeHtml(user.first_name || '')} ${helpers.escapeHtml(user.last_name || '')}</h5>
       ${user.username ? `<p class="text-muted">@${helpers.escapeHtml(user.username)}</p>`: ''}
       </div>
@@ -203,5 +273,7 @@
     }
   };
 
+  // Ekspos ke global
   window.Page = Page;
+
 })(window);

@@ -33,7 +33,7 @@ class NoteService
       throw new ModelNotFoundException('Catatan tidak ditemukan.');
     }
 
-    return $note->load('tags', 'reminder');
+    return $note;
   }
 
   /**
