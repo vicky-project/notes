@@ -184,7 +184,7 @@
     }
   }
 
-  // ---------- Focus Mode Functions (TAMBAHAN) ----------
+  // ---------- Focus Mode Functions ----------
   function enterFocusMode() {
     const quillWrapper = document.getElementById('quill-wrapper');
     if (!quillWrapper) return;
@@ -193,16 +193,19 @@
     document.body.classList.add('fullscreen-active');
     isFullscreen = true;
 
+    // Hapus tombol exit lama (jika ada)
     let exitBtn = document.getElementById('exit-fullscreen-btn');
-    if (!exitBtn) {
-      exitBtn = document.createElement('button');
-      exitBtn.id = 'exit-fullscreen-btn';
-      exitBtn.className = 'btn btn-sm btn-outline-light exit-fullscreen-btn';
-      exitBtn.innerHTML = '<i class="bi bi-fullscreen-exit"></i> Keluar';
-      quillWrapper.appendChild(exitBtn);
-    }
+    if (exitBtn) exitBtn.remove();
 
-    if (quill) quill.focus();
+    // Buat tombol exit
+    exitBtn = document.createElement('button');
+    exitBtn.id = 'exit-fullscreen-btn';
+    exitBtn.className = 'exit-fullscreen-btn';
+    exitBtn.innerHTML = '<i class="bi bi-fullscreen-exit"></i> Keluar';
+    quillWrapper.appendChild(exitBtn);
+
+    // Fokus ke editor
+    if (quill) setTimeout(() => quill.focus(), 50);
   }
 
   function exitFocusMode() {

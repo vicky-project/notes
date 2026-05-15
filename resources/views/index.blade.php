@@ -215,6 +215,7 @@
     border-radius: 0 !important;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     }
     .fullscreen-editor #editor-container {
     flex: 1;
@@ -240,6 +241,16 @@
     top: 10px;
     right: 10px;
     z-index: 10000;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.9rem;
     }
     </style>
     @endpush
