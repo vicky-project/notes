@@ -239,26 +239,26 @@
         }
       }
       html = Page.profile();
+
+    } else if (full === '/notes/trash') {
+      const data = await api.getTrashedNotes();
+      state.setState('trashedNotes', data.data || data);
+      html = Page.trash();
+    } else if (p.isEdit && p.parts.length >= 2) {
+      const id = p.parts[1];
+      const d = await api.getNote(id);
+      state.setState('currentNote', extractData(d));
+      html = Page.noteForm('edit', state.currentNote);
+    } else if (p.parts.length >= 2) {
+      const id = p.parts[1];
+      const d = await api.getNote(id);
+      state.setState('currentNote', extractData(d));
+      html = Page.noteDetail();
+    } else {
+      html = Page.home();
     }
-  } else if (full === '/notes/trash') {
-    const data = await api.getTrashedNotes();
-    state.setState('trashedNotes', data.data || data);
-    html = Page.trash();
-  } else if (p.isEdit && p.parts.length >= 2) {
-    const id = p.parts[1];
-    const d = await api.getNote(id);
-    state.setState('currentNote', extractData(d));
-    html = Page.noteForm('edit', state.currentNote);
-  } else if (p.parts.length >= 2) {
-    const id = p.parts[1];
-    const d = await api.getNote(id);
-    state.setState('currentNote', extractData(d));
-    html = Page.noteDetail();
-  } else {
-    html = Page.home();
+    return html;
   }
-  return html;
-}
 
   async function navigateTo(hash) {
     const parsed = parsePath(hash);
