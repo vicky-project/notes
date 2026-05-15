@@ -10,7 +10,7 @@ class AIService
   protected string $apiKey;
   // Gunakan endpoint Chat Completions Groq yang kompatibel dengan OpenAI
   protected string $baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
-  protected string $model = 'llama3-8b-8192';
+  protected string $model = 'llama-3.1-8b-instant';
 
   public function __construct() {
     $this->apiKey = config('notes.ai.api_key', '');
