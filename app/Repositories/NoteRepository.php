@@ -3,6 +3,7 @@ namespace Modules\Notes\Repositories;
 
 use Modules\Notes\Models\Note;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class NoteRepository
 {
