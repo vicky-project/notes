@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 class AIService
 {
   protected string $apiKey;
-  protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent';
 
   public function __construct() {
     $this->apiKey = config('notes.ai.api_key', '');
