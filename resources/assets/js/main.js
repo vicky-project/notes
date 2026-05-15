@@ -1,9 +1,9 @@
-// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist (final fix menumpuk)
+// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist, Pagination, Trash (fix sync)
 (function(window) {
   'use strict';
 
   if (!window.Core || !window.Page) {
-    console.error('Core atau Page tidak ditemukan. Pastikan urutan pemuatan: Core.js -> Page.js -> Main.js');
+    console.error('Core atau Page tidak ditemukan.');
     return;
   }
 
@@ -15,14 +15,11 @@
   } = window.Core;
   const Page = window.Page;
 
-  // ========== Quill Instance ==========
   let quill = null;
 
-  // ========== Utility Functions ==========
-  function extractData(response) {
-    return response?.data || response;
+  function extractData(r) {
+    return r?.data || r;
   }
-
   function parsePath(hash) {
     const path = hash.replace('#', '') || '/notes/home';
     const parts = path.split('/').filter(Boolean);
@@ -33,28 +30,20 @@
     };
   }
 
-  // ========== Quill Management (PERBAIKAN TUMPUK) ==========
+  // Quill
   function destroyQuill() {
     if (quill) {
-      // Hapus toolbar Quill yang mungkin masih tersisa
       const toolbar = document.querySelector('.ql-toolbar');
       if (toolbar) toolbar.remove();
-      // Kosongkan container editor
       const container = document.getElementById('editor-container');
-      if (container) {
-        container.innerHTML = '';
-      }
+      if (container) container.innerHTML = '';
       quill = null;
     }
   }
-
   function initQuill(initialContent = '') {
-    // Pastikan tidak ada instance sebelumnya
     destroyQuill();
-
     const container = document.getElementById('editor-container');
     if (!container) return;
-
     quill = new Quill('#editor-container', {
       theme: 'snow',
       placeholder: 'Tulis isi catatan di sini...',
@@ -68,72 +57,55 @@
             'list': 'bullet'
           }],
           [{
-            'header': [1, 2, false]
-          }],
+            'header': [1, 2, false]}],
           ['link'],
           ['clean']
         ]
       }
     });
-
     if (initialContent) quill.root.innerHTML = initialContent;
-
     quill.on('text-change', () => {
       const hidden = document.querySelector('input[name="content"][type="hidden"]');
       if (hidden) hidden.value = quill.root.innerHTML;
     });
   }
 
-  // ========== Checklist Builder ==========
+  // Checklist
   function getChecklistItems() {
-    const container = document.getElementById('checklist-items');
-    if (!container) return [];
-    const items = [];
-    container.querySelectorAll('.checklist-item-text').forEach(el => items.push(el.textContent.trim()));
-    return items;
+    const c = document.getElementById('checklist-items');
+    return c ? [...c.querySelectorAll('.checklist-item-text')].map(e => e.textContent.trim()): [];
   }
-
   function addChecklistItem(text) {
-    const container = document.getElementById('checklist-items');
-    if (!container || !text) return;
-    const itemDiv = document.createElement('div');
-    itemDiv.className = 'd-flex align-items-center glass-card p-2 rounded mb-2';
-    itemDiv.innerHTML = `
-    <span class="checklist-item-text flex-grow-1">${helpers.escapeHtml(text)}</span>
-    <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-checklist-item">&times;</button>
-    `;
-    container.appendChild(itemDiv);
+    const c = document.getElementById('checklist-items');
+    if (!c || !text) return;
+    const d = document.createElement('div');
+    d.className = 'd-flex align-items-center glass-card p-2 rounded mb-2';
+    d.innerHTML = `<span class="checklist-item-text flex-grow-1">${helpers.escapeHtml(text)}</span>
+    <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-checklist-item">&times;</button>`;
+    c.appendChild(d);
     updateChecklistHidden();
   }
-
-  function removeChecklistItem(button) {
-    button.closest('.d-flex').remove();
-    updateChecklistHidden();
+  function removeChecklistItem(btn) {
+    btn.closest('.d-flex').remove(); updateChecklistHidden();
   }
-
   function updateChecklistHidden() {
-    const hidden = document.querySelector('input[name="content"][type="hidden"]');
-    if (hidden) {
-      hidden.value = JSON.stringify(getChecklistItems());
-    }
+    const h = document.querySelector('input[name="content"][type="hidden"]');
+    if (h) h.value = JSON.stringify(getChecklistItems());
   }
 
-  // ========== Tag Chips ==========
+  // Tag
   function getTagsFromHidden() {
-    const hidden = document.querySelector('input[name="tags"][type="hidden"]');
-    if (!hidden) return [];
+    const h = document.querySelector('input[name="tags"][type="hidden"]');
+    if (!h) return [];
     try {
-      return JSON.parse(hidden.value) || [];
+      return JSON.parse(h.value) || [];
     } catch {
       return [];
     }
   }
-
   function setTagsToHidden(tags) {
-    const hidden = document.querySelector('input[name="tags"][type="hidden"]');
-    if (hidden) hidden.value = JSON.stringify(tags);
+    const h = document.querySelector('input[name="tags"][type="hidden"]'); if (h) h.value = JSON.stringify(tags);
   }
-
   function renderTagChips() {
     const chips = document.getElementById('tag-chips');
     if (!chips) return;
@@ -141,54 +113,42 @@
     chips.innerHTML = tags.map(name => `
       <span class="badge bg-secondary d-flex align-items-center">
       ${helpers.escapeHtml(name)}
-      <button type="button" class="btn-close btn-close-white ms-1" style="font-size: 0.5rem;" data-remove-tag="${helpers.escapeHtml(name)}"></button>
+      <button type="button" class="btn-close btn-close-white ms-1" style="font-size:0.5rem;" data-remove-tag="${helpers.escapeHtml(name)}"></button>
       </span>
       `).join('');
   }
-
   function addTag(name) {
     const tags = getTagsFromHidden();
     if (!tags.includes(name)) {
-      tags.push(name);
-      setTagsToHidden(tags);
-      renderTagChips();
+      tags.push(name); setTagsToHidden(tags); renderTagChips();
     }
   }
-
   function removeTag(name) {
-    let tags = getTagsFromHidden();
-    tags = tags.filter(t => t !== name);
-    setTagsToHidden(tags);
-    renderTagChips();
+    let tags = getTagsFromHidden().filter(t => t !== name);
+    setTagsToHidden(tags); renderTagChips();
   }
-
   function commitPendingTag() {
     const input = document.getElementById('tag-input');
     if (!input) return;
     const value = input.value.trim().replace(/,/g, '').trim();
     if (value) {
-      addTag(value);
-      input.value = '';
+      addTag(value); input.value = '';
     }
   }
 
-  // ========== Form Type Switcher ==========
+  // Form type
   function initFormByType(type) {
-    const quillWrapper = document.getElementById('quill-wrapper');
-    const checklistWrapper = document.getElementById('checklist-wrapper');
-    if (!quillWrapper || !checklistWrapper) return;
-
+    const qw = document.getElementById('quill-wrapper');
+    const cw = document.getElementById('checklist-wrapper');
+    if (!qw || !cw) return;
     if (type === 'checklist') {
-      quillWrapper.style.display = 'none';
-      checklistWrapper.style.display = '';
-      destroyQuill(); // Hancurkan Quill saat pindah ke checklist
-
+      qw.style.display = 'none'; cw.style.display = '';
+      destroyQuill();
       let items = [];
       if (state.currentNote?.content) {
         try {
-          items = JSON.parse(state.currentNote.content);
-          if (!Array.isArray(items)) items = [];
-        } catch (e) {}
+          items = JSON.parse(state.currentNote.content); if (!Array.isArray(items)) items = [];
+        } catch {}
       }
       const container = document.getElementById('checklist-items');
       if (container) {
@@ -197,91 +157,108 @@
       }
       updateChecklistHidden();
     } else {
-      quillWrapper.style.display = '';
-      checklistWrapper.style.display = 'none';
-      // Pindah ke teks: initQuill akan memanggil destroyQuill() dulu, lalu inisialisasi baru
+      qw.style.display = ''; cw.style.display = 'none';
       initQuill(state.currentNote?.content || '');
     }
   }
 
-  // ========== Routing & Render ==========
-  async function renderRoute(parsed) {
-    const {
-      full,
-      parts,
-      isEdit
-    } = parsed;
-    let html = '';
-
-    if (full === '/notes/home') {
-      if (state.notes.length === 0) {
-        const data = await api.getNotes({
-          per_page: 5
-        });
-        state.setState('notes', extractData(data));
-      }
-      if (state.reminders.length === 0) {
-        const remData = await api.getReminders();
-        state.setState('reminders', extractData(remData));
-      }
-      html = Page.home();
-    } else if (full === '/notes/all') {
+  // Pagination
+  async function loadNotesPage(page) {
+    tgApp.showLoading('Memuat...');
+    try {
       const keyword = state.searchKeyword || '';
       const data = await api.getNotes({
-        page: 1,
-        search: keyword
+        page, search: keyword
       });
       state.setState('notes', extractData(data));
       state.setState('pagination', {
-        currentPage: data.current_page || 1,
+        currentPage: data.current_page || page,
         lastPage: data.last_page || 1
       });
+      const listContainer = document.getElementById('notes-list-container');
+      if (listContainer) listContainer.innerHTML = Page.renderNotesGrid(state.notes);
+      renderNotesPagination();
+      window.scrollTo({
+        top: 0, behavior: 'smooth'
+      });
+    } catch(err) {
+      tgApp.showToast(err.message, 'danger');
+    }
+    finally {
+      tgApp.hideLoading();
+    }
+  }
+  function renderNotesPagination() {
+    const {
+      currentPage,
+      lastPage
+    } = state.pagination;
+    tgApp.renderPagination('pagination-container', currentPage, lastPage, page => loadNotesPage(page), false);
+  }
+
+  // Routing
+  async function renderRoute(p) {
+    let html = '';
+    if (p.full === '/notes/home') {
+      if (state.notes.length === 0) {
+        const d = await api.getNotes({
+          per_page: 5
+        });
+        state.setState('notes', extractData(d));
+      }
+      if (state.reminders.length === 0) {
+        const d = await api.getReminders();
+        state.setState('reminders', extractData(d));
+      }
+      html = Page.home();
+    } else if (p.full === '/notes/all') {
+      const keyword = state.searchKeyword || '';
+      const d = await api.getNotes({
+        page: 1, search: keyword
+      });
+      state.setState('notes', extractData(d));
+      state.setState('pagination', {
+        currentPage: d.current_page || 1, lastPage: d.last_page || 1
+      });
       html = Page.notesList();
-    } else if (full === '/notes/create') {
+    } else if (p.full === '/notes/create') {
       state.setState('currentNote', null);
       html = Page.noteForm();
-    } else if (full === '/notes/reminders') {
-      const remData = await api.getReminders();
-      state.setState('reminders', extractData(remData));
+    } else if (p.full === '/notes/reminders') {
+      const d = await api.getReminders();
+      state.setState('reminders', extractData(d));
       html = Page.reminders();
-    } else if (full === '/notes/profile') {
+    } else if (p.full === '/notes/profile') {
       if (!state.user || !state.user.id) {
         try {
           const profile = await api.getProfile();
           state.setState('user', profile);
-        } catch (err) {
+        } catch(err) {
           const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
           if (tgUser) state.setState('user', tgUser);
         }
       }
       html = Page.profile();
-    } else if (full === '/notes/trash') {
-      const data = await api.getTrashedNotes();
-      state.setState('trashedNotes', data.data || data);
-      html = Page.trash();
-    } else if (isEdit && parts.length >= 2) {
-      const id = parts[1];
-      const data = await api.getNote(id);
-      state.setState('currentNote', extractData(data));
+    } else if (p.isEdit && p.parts.length >= 2) {
+      const id = p.parts[1];
+      const d = await api.getNote(id);
+      state.setState('currentNote', extractData(d));
       html = Page.noteForm('edit', state.currentNote);
-    } else if (parts.length >= 2) {
-      const id = parts[1];
-      const data = await api.getNote(id);
-      state.setState('currentNote', extractData(data));
+    } else if (p.parts.length >= 2) {
+      const id = p.parts[1];
+      const d = await api.getNote(id);
+      state.setState('currentNote', extractData(d));
       html = Page.noteDetail();
     } else {
       html = Page.home();
     }
-
     return html;
   }
 
   async function navigateTo(hash) {
     const parsed = parsePath(hash);
     state.setState('activeRoute', parsed.full);
-
     tgApp.showLoading('Memuat...');
-
     try {
       const html = await renderRoute(parsed);
       const content = document.getElementById('app-content');
@@ -290,8 +267,6 @@
         content.innerHTML = html;
         content.classList.remove('page-loading');
         updateActiveNav(parsed.full);
-
-        // Inisialisasi form jika di halaman create/edit
         if (parsed.full === '/notes/create' || parsed.isEdit) {
           renderTagChips();
           const typeSelect = document.getElementById('note-type-select');
@@ -304,83 +279,33 @@
         }
       },
         80);
-    } catch (error) {
-      tgApp.showToast(error.message,
+    } catch(err) {
+      tgApp.showToast(err.message,
         'danger');
-    } finally {
+    }
+    finally {
       tgApp.hideLoading();
     }
-  }
-
-  async function loadNotesPage(page) {
-    tgApp.showLoading('Memuat...');
-    try {
-      const data = await api.getNotes({
-        page,
-        search: state.searchKeyword || ''
-      });
-      state.setState('notes',
-        extractData(data));
-      state.setState('pagination',
-        {
-          currentPage: data.current_page || page,
-          lastPage: data.last_page || 1
-        });
-      // Update daftar catatan
-      const listContainer = document.getElementById('notes-list-container');
-      if (listContainer) {
-        listContainer.innerHTML = Page.renderNotesGrid(state.notes);
-      }
-      // Update pagination
-      renderNotesPagination();
-    } catch (error) {
-      tgApp.showToast(error.message, 'danger');
-    } finally {
-      tgApp.hideLoading();
-    }
-  }
-
-  function renderNotesPagination() {
-    const {
-      currentPage,
-      lastPage
-    } = state.pagination;
-    // Gunakan fungsi dari TelegramApp
-    tgApp.renderPagination(
-      'pagination-container',
-      // container ID
-      currentPage,
-      lastPage,
-      (page) => loadNotesPage(page),
-      // callback
-      true // scrollToTop
-    );
   }
 
   function updateActiveNav(path) {
     document.querySelectorAll('.nav-link').forEach(link => {
       const route = link.dataset.route;
-      if (path.startsWith(route)) {
-        link.classList.add('active-link', 'text-warning');
-      } else {
-        link.classList.remove('active-link', 'text-warning');
-      }
+      if (path.startsWith(route)) link.classList.add('active-link', 'text-warning');
+      else link.classList.remove('active-link', 'text-warning');
     });
   }
 
-  // ========== Global Event Delegation ==========
+  // Events
   function setupGlobalEvents() {
     document.body.addEventListener('click',
       async (e) => {
-        // Navigasi hash
         const anchor = e.target.closest('a');
         if (anchor && anchor.getAttribute('href')?.startsWith('#')) {
           e.preventDefault();
           window.location.hash = anchor.getAttribute('href');
           return;
         }
-
-        // Hapus catatan
         const deleteBtn = e.target.closest('[data-delete-note]');
         if (deleteBtn) {
           const id = deleteBtn.dataset.deleteNote;
@@ -389,13 +314,11 @@
               await api.deleteNote(id);
               tgApp.showToast('Catatan dihapus', 'success');
               window.location.hash = '#/notes/all';
-            } catch (err) {
+            } catch(err) {
               tgApp.showToast(err.message, 'danger');
             }
           }
         }
-
-        // Selesaikan pengingat
         const completeBtn = e.target.closest('[data-complete-reminder]');
         if (completeBtn) {
           const id = completeBtn.dataset.completeReminder;
@@ -403,39 +326,31 @@
             await api.completeReminder(id);
             tgApp.showToast('Pengingat selesai', 'success');
             navigateTo(window.location.hash);
-          } catch (err) {
+          } catch(err) {
             tgApp.showToast(err.message, 'danger');
           }
         }
-
-        // Hapus tag
         const removeBtn = e.target.closest('[data-remove-tag]');
         if (removeBtn) {
           e.preventDefault();
           removeTag(removeBtn.dataset.removeTag);
         }
-
-        // Tambah checklist item
         if (e.target.id === 'add-checklist-btn') {
           e.preventDefault();
           const input = document.getElementById('checklist-input');
           if (input) {
             const text = input.value.trim();
             if (text) {
-              addChecklistItem(text);
-              input.value = '';
-              input.focus();
+              addChecklistItem(text); input.value = ''; input.focus();
             }
           }
         }
-
-        // Hapus checklist item
         if (e.target.classList.contains('remove-checklist-item')) {
           e.preventDefault();
           removeChecklistItem(e.target);
         }
 
-        // Toggle checklist di detail
+        // Toggle checklist (FIXED)
         const toggleCheck = e.target.closest('.checklist-toggle');
         if (toggleCheck) {
           e.preventDefault();
@@ -444,22 +359,30 @@
           const index = parseInt(row.dataset.index, 10);
           const note = state.currentNote;
           if (!note || note.type !== 'checklist') return;
-
           try {
             const items = JSON.parse(note.content);
             if (index >= 0 && index < items.length) {
               const item = items[index];
               const text = item.text || item;
               const newDone = !item.done;
-
               items[index] = {
                 text,
                 done: newDone
               };
+              const updatedContent = JSON.stringify(items);
+
+              // Update currentNote
               state.setState('currentNote', {
-                ...note, content: JSON.stringify(items)
+                ...note, content: updatedContent
               });
 
+              // Update notes array (fix home tidak terupdate)
+              const updatedNotes = state.notes.map(n => n.id === note.id ? {
+                ...n, content: updatedContent
+              }: n);
+              state.setState('notes', updatedNotes);
+
+              // DOM update
               const icon = row.querySelector('.checklist-toggle');
               const span = row.querySelector('span');
               if (newDone) {
@@ -473,24 +396,16 @@
               }
 
               api.updateNote(note.id, {
-                content: JSON.stringify(items), type: 'checklist'
+                content: updatedContent, type: 'checklist'
               })
               .catch(err => tgApp.showToast('Gagal menyimpan: ' + err.message, 'danger'));
             }
-          } catch (err) {
+          } catch(err) {
             tgApp.showToast('Data checklist rusak', 'danger');
           }
         }
 
-        // Logout
-        if (e.target.id === 'logout-btn') {
-          localStorage.removeItem('telegram_token');
-          tgApp.showToast('Logout berhasil', 'success');
-          if (window.Telegram?.WebApp) {
-            window.Telegram.WebApp.close();
-          }
-        }
-
+        // Trash
         const restoreBtn = e.target.closest('[data-restore-note]');
         if (restoreBtn) {
           e.preventDefault();
@@ -503,7 +418,6 @@
             tgApp.showToast(err.message, 'danger');
           }
         }
-
         const forceDeleteBtn = e.target.closest('[data-force-delete-note]');
         if (forceDeleteBtn) {
           e.preventDefault();
@@ -518,20 +432,23 @@
             }
           }
         }
+
+        if (e.target.id === 'logout-btn') {
+          localStorage.removeItem('telegram_token');
+          tgApp.showToast('Logout berhasil', 'success');
+          if (window.Telegram?.WebApp) window.Telegram.WebApp.close();
+        }
       });
 
     document.body.addEventListener('change',
-      (e) => {
-        if (e.target.id === 'note-type-select') {
-          initFormByType(e.target.value);
-        }
+      e => {
+        if (e.target.id === 'note-type-select') initFormByType(e.target.value);
       });
 
     document.body.addEventListener('submit',
       async (e) => {
         e.preventDefault();
         const form = e.target;
-
         if (form.id === 'quick-capture') {
           const titleInput = form.querySelector('input[name="title"]');
           const title = titleInput?.value.trim();
@@ -540,16 +457,14 @@
             const newNote = await api.createNote({
               title
             });
-            const noteData = extractData(newNote);
-            state.setState('notes', [noteData, ...state.notes]);
+            state.setState('notes', [extractData(newNote), ...state.notes]);
             form.reset();
             tgApp.showToast('Catatan tersimpan', 'success');
             navigateTo('#/notes/home');
-          } catch (err) {
+          } catch(err) {
             tgApp.showToast(err.message, 'danger');
           }
         }
-
         if (form.id === 'note-form') {
           const submitBtn = form.querySelector('button[type="submit"]');
           const originalText = submitBtn.innerHTML;
@@ -558,16 +473,8 @@
           tgApp.showLoading('Menyimpan catatan...');
 
           commitPendingTag();
-
-          let contentValue = '';
-          if (quill) {
-            contentValue = quill.root.innerHTML;
-          } else {
-            contentValue = JSON.stringify(getChecklistItems());
-          }
-
+          let contentValue = quill ? quill.root.innerHTML: JSON.stringify(getChecklistItems());
           const tagsArray = getTagsFromHidden();
-
           const data = {
             title: form.querySelector('input[name="title"]').value.trim(),
             type: form.querySelector('select[name="type"]').value,
@@ -585,7 +492,7 @@
               tgApp.showToast('Catatan dibuat', 'success');
             }
             window.location.hash = '#/notes/all';
-          } catch (err) {
+          } catch(err) {
             tgApp.showToast(err.message, 'danger');
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
@@ -599,77 +506,54 @@
       state.setState('searchKeyword', keyword);
       try {
         const data = await api.getNotes({
-          page: 1,
-          search: keyword
+          page: 1, search: keyword
         });
         state.setState('notes', extractData(data));
         state.setState('pagination', {
-          currentPage: data.current_page || 1,
-          lastPage: data.last_page || 1
+          currentPage: data.current_page || 1, lastPage: data.last_page || 1
         });
         const listContainer = document.getElementById('notes-list-container');
-        if (listContainer) {
-          listContainer.innerHTML = Page.renderNotesGrid(state.notes);
-        }
+        if (listContainer) listContainer.innerHTML = Page.renderNotesGrid(state.notes);
         renderNotesPagination();
-      } catch (err) {
+      } catch(err) {
         tgApp.showToast(err.message, 'danger');
       }
     },
       300);
 
     document.body.addEventListener('input',
-      (e) => {
-        if (e.target.id === 'search-notes') {
-          debouncedSearch(e.target.value);
-        }
+      e => {
+        if (e.target.id === 'search-notes') debouncedSearch(e.target.value);
       });
 
     document.body.addEventListener('keydown',
-      (e) => {
-        if (e.target.id === 'tag-input') {
-          if (e.key === ',' || e.key === 'Enter') {
-            e.preventDefault();
-            commitPendingTag();
-          }
+      e => {
+        if (e.target.id === 'tag-input' && (e.key === ',' || e.key === 'Enter')) {
+          e.preventDefault();
+          commitPendingTag();
         }
       });
   }
 
-  // ========== Inisialisasi Aplikasi ==========
   async function init() {
     try {
       const profile = await api.getProfile();
       state.setState('user',
         profile);
-    } catch (err) {
+    } catch(err) {
       const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-      if (tgUser) {
-        state.setState('user', {
-          id: tgUser.id,
-          first_name: tgUser.first_name,
-          last_name: tgUser.last_name,
-          username: tgUser.username || null,
-          photo_url: tgUser.photo_url || null
-        });
-      }
+      if (tgUser) state.setState('user', {
+        id: tgUser.id, first_name: tgUser.first_name, last_name: tgUser.last_name,
+        username: tgUser.username || null, photo_url: tgUser.photo_url || null
+      });
     }
 
     window.addEventListener('hashchange', () => navigateTo(window.location.hash));
-
-    if (!window.location.hash) {
-      window.location.hash = '#/notes/home';
-    } else {
-      await navigateTo(window.location.hash);
-    }
-
+    if (!window.location.hash) window.location.hash = '#/notes/home';
+    else await navigateTo(window.location.hash);
     setupGlobalEvents();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })(window);

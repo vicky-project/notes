@@ -132,7 +132,7 @@
               return `
               <div class="d-flex align-items-center mb-2 checklist-item-row" data-index="${index}">
               <i class="bi ${done ? 'bi-check-square-fill text-success': 'bi-square'} me-2 checklist-toggle" style="cursor:pointer; font-size: 1.2rem;"></i>
-              <span class="${done ? 'text-decoration-line-through text-muted': ''}">${helpers.escapeHtml(text)}</span>
+              <span class="${done ? 'text-decoration-line-through text-muted': ''} checklist-toggle">${helpers.escapeHtml(text)}</span>
               </div>
               `;
             }).join('')}
