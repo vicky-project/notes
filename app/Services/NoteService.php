@@ -8,6 +8,7 @@ use Modules\Notes\Enums\NoteType;
 use Modules\Notes\Models\Note;
 use Modules\Notes\Models\Tag;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Modules\Telegram\Services\Support\TelegramApi;
 
 class NoteService
 {
@@ -214,6 +215,32 @@ class NoteService
 
       default:
         return $content;
+    }
+  }
+
+  public function sendDueReminders(): void
+  {
+    $dueReminders = $this->reminderRepository->getDueReminders();
+
+    $telegramApi = app(TelegramApi::class);
+
+    foreach ($dueReminders as $reminder) {
+      $telegramUser = $reminder->note->user;
+      if (!$telegramUser) continue;
+
+      $chatId = $telegramUser->telegram_id; // pastikan kolom ini ada
+      $noteTitle = $reminder->note->title;
+      $message = "⏰ Pengingat: *{$noteTitle}*\n" . ($reminder->note->content ? substr(strip_tags($reminder->note->content), 0, 100) : '');
+
+      $result = $telegramApi->sendMessage(
+        chatId: $chatId,
+        text: $message,
+        parseMode: 'MarkdownV2'
+      );
+
+      if ($result) {
+        $this->reminderRepository->markNotified($reminder);
+      }
     }
   }
 }

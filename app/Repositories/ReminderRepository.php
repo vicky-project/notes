@@ -26,4 +26,22 @@ class ReminderRepository
   {
     $reminder->update(['is_completed' => true]);
   }
+
+  /**
+  * Ambil pengingat yang jatuh tempo dan belum diberitahu.
+  */
+  public function getDueReminders(): array
+  {
+    return Reminder::where('remind_at', '<=', Carbon::now())
+    ->where('is_completed', false)
+    ->whereNull('notified_at')
+    ->with('note.user') // pastikan relasi note -> user
+    ->get()
+    ->all();
+  }
+
+  public function markNotified(Reminder $reminder): void
+  {
+    $reminder->update(['notified_at' => Carbon::now()]);
+  }
 }
