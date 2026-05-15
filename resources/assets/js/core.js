@@ -82,6 +82,14 @@
       return tgApp.fetchWithAuth(BASE_URL + `/api/notes/${id}/force`, {
         method: 'DELETE'
       });
+    },
+    async aiSearch(query) {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/ai/search?query=${encodeURIComponent(query)}`);
+    },
+    async summarizeNote(id) {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/ai/note/${id}/summarize`, {
+        method: 'POST'
+      });
     }
   };
 
