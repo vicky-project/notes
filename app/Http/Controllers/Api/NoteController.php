@@ -61,7 +61,7 @@ class NoteController extends Controller
       \Log::error("Failed to get trashed", [
         'message' => $e->getMessage(),
         'trace' => $e->getTrace()
-      ]):
+      ]);
       return NoteResource::collection([]);
     }
   }
