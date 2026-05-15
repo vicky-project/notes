@@ -201,56 +201,5 @@
     .ql-snow.ql-toolbar button.ql-active .ql-fill {
     fill: var(--tg-theme-button-color, #ffc107);
     }
-    /* ========== Fullscreen Editor ========== */
-    .fullscreen-editor {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: 9999 !important;
-    background: var(--tg-theme-bg-color, #1a1a2e) !important;
-    padding: 1rem !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    }
-    .fullscreen-editor #editor-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    }
-    .fullscreen-editor .ql-toolbar {
-    border-radius: 12px 12px 0 0 !important;
-    }
-    .fullscreen-editor .ql-container {
-    flex: 1;
-    border-radius: 0 0 12px 12px !important;
-    }
-    body.fullscreen-active .fixed-bottom,
-    body.fullscreen-active #app-content > *:not(#quill-wrapper) {
-    display: none !important;
-    }
-    body.fullscreen-active #app-content {
-    padding: 0 !important;
-    }
-    .exit-fullscreen-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 10000;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.9rem;
-    }
     </style>
     @endpush
