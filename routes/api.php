@@ -19,7 +19,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
   Route::prefix('ai')->group(function() {
     Route::get('search', [AIController::class, 'search']);
-    Route::post('notes/{id}/summarize', [AIController::class, 'summarize']);
+    Route::post('note/{id}/summarize', [AIController::class, 'summarize']);
   });
 
   Route::prefix('integration')->group(function() {
