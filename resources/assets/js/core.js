@@ -29,7 +29,8 @@
     pagination: {
       currentPage: 1,
       lastPage: 1
-    }
+    },
+    trashedNotes: [],
   };
 
   const api = {
@@ -67,6 +68,19 @@
     },
     async getProfile() {
       return tgApp.fetchWithAuth(BASE_URL + '/api/notes/profile');
+    },
+    async getTrashedNotes() {
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes/trashed');
+    },
+    async restoreNote(id) {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes/${id}/restore`, {
+        method: 'PATCH'
+      });
+    },
+    async forceDeleteNote(id) {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes/${id}/force`, {
+        method: 'DELETE'
+      });
     }
   };
 

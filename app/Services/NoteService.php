@@ -7,6 +7,7 @@ use Modules\Notes\Repositories\ReminderRepository;
 use Modules\Notes\Enums\NoteType;
 use Modules\Notes\Models\Note;
 use Modules\Notes\Models\Tag;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class NoteService
@@ -128,6 +129,42 @@ class NoteService
       throw new ModelNotFoundException('Catatan tidak ditemukan.');
     }
     $this->noteRepository->delete($note);
+  }
+
+  /**
+  * Mendapatkan semua catatan yang dihapus.
+  */
+  public function getTrashedNotes(int $telegramUserId): Collection
+  {
+    return $this->noteRepository->getTrashedNotes($telegramUserId);
+  }
+
+  /**
+  * Memulihkan catatan dari trash.
+  */
+  public function restoreNote(int $id, int $telegramUserId): Note
+  {
+    $note = $this->noteRepository->findTrashed($id, $telegramUserId);
+
+    if (!$note) {
+      throw new ModelNotFoundException('Catatan tidak ditemukan di trash.');
+    }
+
+    return $this->noteRepository->restore($note);
+  }
+
+  /**
+  * Menghapus permanen catatan dari database.
+  */
+  public function forceDeleteNote(int $id, int $telegramUserId): void
+  {
+    $note = $this->noteRepository->findTrashed($id, $telegramUserId);
+
+    if (!$note) {
+      throw new ModelNotFoundException('Catatan tidak ditemukan di trash.');
+    }
+
+    $this->noteRepository->forceDelete($note);
   }
 
   protected function syncTags(Note $note, array $tagNames): void

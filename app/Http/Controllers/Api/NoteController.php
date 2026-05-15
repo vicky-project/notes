@@ -48,4 +48,31 @@ class NoteController extends Controller
     $this->noteService->deleteNote((int) $id, $user->id);
     return response()->json(['message' => 'Catatan dihapus']);
   }
+
+  /**
+  * Menampilkan semua catatan yang dihapus (trash).
+  */
+  public function trashed(Request $request) {
+    $user = $request->user();
+    $notes = $this->noteService->getTrashedNotes($user->id);
+    return NoteResource::collection($notes);
+  }
+
+  /**
+  * Memulihkan catatan dari trash.
+  */
+  public function restore(Request$request, $id) {
+    $user = $request->user();
+    $note = $this->noteService->restoreNote($id, $user->id);
+    return new NoteResource($note);
+  }
+
+  /**
+  * Menghapus catatan secara permanen.
+  */
+  public function forceDelete(Request $request, $id) {
+    $user = $request->user();
+    $this->noteService->forceDeleteNote($id, $user->id);
+    return response()->json(['message' => 'Catatan dihapus permanen']);
+  }
 }

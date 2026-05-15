@@ -42,4 +42,44 @@ class NoteRepository
   {
     $note->delete();
   }
+
+  /**
+  * Mengambil semua catatan yang dihapus (soft deleted) milik user.
+  */
+  public function getTrashedNotes(int $telegramUserId): Collection
+  {
+    return Note::onlyTrashed()
+    ->where('telegram_user_id', $telegramUserId)
+    ->with('tags')
+    ->latest()
+    ->get();
+  }
+
+  /**
+  * Mencari satu catatan yang dihapus berdasarkan ID dan user.
+  */
+  public function findTrashed(int $id, int $telegramUserId): ?Note
+  {
+    return Note::onlyTrashed()
+    ->where('id', $id)
+    ->where('telegram_user_id', $telegramUserId)
+    ->first();
+  }
+
+  /**
+  * Memulihkan catatan dari trash.
+  */
+  public function restore(Note $note): Note
+  {
+    $note->restore();
+    return $note;
+  }
+
+  /**
+  * Menghapus permanen catatan dari database.
+  */
+  public function forceDelete(Note $note): void
+  {
+    $note->forceDelete();
+  }
 }

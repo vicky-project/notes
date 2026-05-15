@@ -271,6 +271,42 @@
       </div>
       </div>
       <button id="logout-btn" class="btn btn-danger mt-4 w-100"><i class="bi bi-box-arrow-right"></i> Logout</button>
+      <a href="#/notes/trash" class="btn btn-outline-light mt-2 w-100"><i class="bi bi-trash"></i> Trash</a>
+      `;
+    },
+
+    trash() {
+      const trashedNotes = state.trashedNotes || [];
+      return `
+      <h5 class="mb-3">🗑️ Trash</h5>
+      ${trashedNotes.length ? trashedNotes.map(note => `
+        <div class="card note-card text-white mb-2 border-secondary">
+        <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+        <h6 class="mb-0">${helpers.escapeHtml(note.title)}</h6>
+        <small class="text-muted">Dihapus: ${helpers.formatDate(note.deleted_at)}</small>
+        ${note.tags?.length ? `
+        <div class="d-flex flex-wrap gap-1 mt-1">
+        ${note.tags.map(tag => `<span class="badge bg-secondary">${helpers.escapeHtml(tag.name)}</span>`).join('')}
+        </div>
+        `: ''}
+        </div>
+        <div class="d-flex gap-2">
+        <button data-restore-note="${note.id}" class="btn btn-sm btn-outline-success" title="Pulihkan">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+        <button data-force-delete-note="${note.id}" class="btn btn-sm btn-outline-danger" title="Hapus Permanen">
+        <i class="bi bi-trash-fill"></i>
+        </button>
+        </div>
+        </div>
+        </div>
+        `).join(''): `
+      <div class="empty-state">
+      <i class="bi bi-trash"></i>
+      <p class="mb-2">Trash kosong</p>
+      </div>
+      `}
       `;
     }
   };

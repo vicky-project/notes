@@ -255,6 +255,10 @@
         }
       }
       html = Page.profile();
+    } else if (full === '/notes/trash') {
+      const data = await api.getTrashedNotes();
+      state.setState('trashedNotes', data.data || data);
+      html = Page.trash();
     } else if (isEdit && parts.length >= 2) {
       const id = parts[1];
       const data = await api.getNote(id);
@@ -484,6 +488,34 @@
           tgApp.showToast('Logout berhasil', 'success');
           if (window.Telegram?.WebApp) {
             window.Telegram.WebApp.close();
+          }
+        }
+
+        const restoreBtn = e.target.closest('[data-restore-note]');
+        if (restoreBtn) {
+          e.preventDefault();
+          const id = restoreBtn.dataset.restoreNote;
+          try {
+            await api.restoreNote(id);
+            tgApp.showToast('Catatan dipulihkan', 'success');
+            navigateTo(window.location.hash);
+          } catch(err) {
+            tgApp.showToast(err.message, 'danger');
+          }
+        }
+
+        const forceDeleteBtn = e.target.closest('[data-force-delete-note]');
+        if (forceDeleteBtn) {
+          e.preventDefault();
+          const id = forceDeleteBtn.dataset.forceDeleteNote;
+          if (confirm('Hapus permanen? Tindakan ini tidak dapat dibatalkan.')) {
+            try {
+              await api.forceDeleteNote(id);
+              tgApp.showToast('Catatan dihapus permanen', 'success');
+              navigateTo(window.location.hash);
+            } catch(err) {
+              tgApp.showToast(err.message, 'danger');
+            }
           }
         }
       });
