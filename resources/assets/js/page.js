@@ -271,7 +271,7 @@
       </div>
       </div>
       <button id="logout-btn" class="btn btn-danger mt-4 w-100"><i class="bi bi-box-arrow-right"></i> Logout</button>
-      <a href="#/notes/trash" class="btn btn-outline-light mt-2 w-100"><i class="bi bi-trash"></i> Trash</a>
+      <a href="#/notes/trashed" class="btn btn-outline-light mt-2 w-100"><i class="bi bi-trash"></i> Trash</a>
       `;
     },
 
