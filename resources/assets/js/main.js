@@ -240,7 +240,7 @@
       }
       html = Page.profile();
 
-    } else if (full === '/notes/trash') {
+    } else if (p.full === '/notes/trash') {
       const data = await api.getTrashedNotes();
       state.setState('trashedNotes', data.data || data);
       html = Page.trash();
