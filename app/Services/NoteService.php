@@ -40,7 +40,7 @@ class NoteService
     $reminderAt = $data['reminder_at'] ?? null;
     unset($data['reminder_at']);
 
-    $data['content'] = $this->sanitizeContent($data['content'] ?? '', $data['type'] ?? NoteType::Text);
+    $data['content'] = $this->sanitizeContent($data['content'] ?? '', $data['type'] ?? NoteType::Text->value);
 
     $note = $this->noteRepository->create($data);
 
@@ -69,10 +69,10 @@ class NoteService
     $reminderAt = $data['reminder_at'] ?? null;
     unset($data['reminder_at']);
 
-    $type = $data['type'] ?? $note->type;
+    $type = $data['type'] ?? $note->type?->value;
     $content = $data['content'] ?? $note->content;
 
-    if ($type === NoteType::Checklist) {
+    if ($type === NoteType::Checklist->value) {
       $oldItems = json_decode($note->content, true) ?: [];
       $newItems = json_decode($content, true) ?: [];
 
@@ -177,10 +177,10 @@ class NoteService
     return is_array($tags) ? $tags : [];
   }
 
-  private function sanitizeContent(string $content, NoteType $type): string
+  private function sanitizeContent(string $content, string $type): string
   {
     switch ($type) {
-      case NoteType::Checklist:
+      case NoteType::Checklist->value:
         $decoded = json_decode($content, true);
         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
           $normalized = array_map(function($item) {
@@ -196,7 +196,7 @@ class NoteService
         }
         return '[]';
 
-      case NoteType::Text:
+      case NoteType::Text->value:
         $allowedTags = '<p><br><strong><em><u><s><h1><h2><blockquote><ol><ul><li><a><img><code><pre><span>';
         $clean = strip_tags($content,
           $allowedTags);
@@ -205,8 +205,8 @@ class NoteService
           $clean);
         return $clean;
 
-      case NoteType::Image:
-      case NoteType::Voice:
+      case NoteType::Image->value:
+      case NoteType::Voice->value:
         $content = trim($content);
         if (filter_var($content, FILTER_VALIDATE_URL)) {
           return $content;
