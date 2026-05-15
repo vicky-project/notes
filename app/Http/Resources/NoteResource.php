@@ -15,7 +15,7 @@ class NoteResource extends JsonResource
       'metadata' => $this->metadata,
       'created_at' => $this->created_at->toIso8601String(),
       'updated_at' => $this->updated_at->toIso8601String(),
-      'deleted_at' => $this->deleted_at->toIso8601String(),
+      'deleted_at' => $this->deleted_at ? $this->deleted_at->toIso8601String() : null,
       'tags' => $this->whenLoaded('tags', function () {
         return $this->tags->map(fn($tag) => [
           'id' => $tag->id,
