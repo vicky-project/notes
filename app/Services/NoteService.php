@@ -7,7 +7,6 @@ use Modules\Notes\Repositories\ReminderRepository;
 use Modules\Notes\Enums\NoteType;
 use Modules\Notes\Models\Note;
 use Modules\Notes\Models\Tag;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class NoteService
@@ -60,7 +59,6 @@ class NoteService
       throw new ModelNotFoundException('Catatan tidak ditemukan.');
     }
 
-    // Hanya proses tags jika ada dalam request
     $hasTags = array_key_exists('tags', $data);
     if ($hasTags) {
       $tags = $this->parseTags($data['tags']);
@@ -73,12 +71,10 @@ class NoteService
     $type = $data['type'] ?? $note->type;
     $content = $data['content'] ?? $note->content;
 
-    // Jika checklist, lakukan merge item lama & baru
     if ($type === 'checklist') {
       $oldItems = json_decode($note->content, true) ?: [];
       $newItems = json_decode($content, true) ?: [];
 
-      // Buat map dari item lama (text => done)
       $oldMap = [];
       foreach ($oldItems as $old) {
         $text = is_string($old) ? $old : ($old['text'] ?? '');
@@ -86,7 +82,6 @@ class NoteService
         if ($text) $oldMap[$text] = $done;
       }
 
-      // Gabungkan: item baru pertahankan status done jika sebelumnya ada
       $merged = [];
       foreach ($newItems as $item) {
         if (is_string($item)) {
@@ -107,7 +102,6 @@ class NoteService
 
     $note = $this->noteRepository->update($note, $data);
 
-    // Hanya sync tags jika tags dikirim dalam request
     if ($hasTags) {
       $this->syncTags($note, $tags);
     }
@@ -131,39 +125,26 @@ class NoteService
     $this->noteRepository->delete($note);
   }
 
-  /**
-  * Mendapatkan semua catatan yang dihapus.
-  */
-  public function getTrashedNotes(int $telegramUserId): Collection
-  {
+  // Trash methods
+  public function getTrashedNotes(int $telegramUserId) {
     return $this->noteRepository->getTrashedNotes($telegramUserId);
   }
 
-  /**
-  * Memulihkan catatan dari trash.
-  */
   public function restoreNote(int $id, int $telegramUserId): Note
   {
     $note = $this->noteRepository->findTrashed($id, $telegramUserId);
-
     if (!$note) {
       throw new ModelNotFoundException('Catatan tidak ditemukan di trash.');
     }
-
     return $this->noteRepository->restore($note);
   }
 
-  /**
-  * Menghapus permanen catatan dari database.
-  */
   public function forceDeleteNote(int $id, int $telegramUserId): void
   {
     $note = $this->noteRepository->findTrashed($id, $telegramUserId);
-
     if (!$note) {
       throw new ModelNotFoundException('Catatan tidak ditemukan di trash.');
     }
-
     $this->noteRepository->forceDelete($note);
   }
 
@@ -197,32 +178,42 @@ class NoteService
 
   private function sanitizeContent(string $content, string $type): string
   {
-    if ($type === NoteType::Checklist->value) {
-      // Validasi JSON, jangan sanitasi HTML
-      $decoded = json_decode($content, true);
-      if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-        // Normalisasi setiap item ke {text, done}
-        $normalized = array_map(function($item) {
-          if (is_string($item)) return ['text' => $item,
-            'done' => false];
-          return [
-            'text' => $item['text'] ?? '',
-            'done' => $item['done'] ?? false
-          ];
-        },
-          $decoded);
-        return json_encode($normalized);
-      }
-      return '[]';
-    }
+    switch ($type) {
+      case NoteType::Checklist->value:
+        $decoded = json_decode($content, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+          $normalized = array_map(function($item) {
+            if (is_string($item)) return ['text' => $item,
+              'done' => false];
+            return [
+              'text' => $item['text'] ?? '',
+              'done' => $item['done'] ?? false
+            ];
+          },
+            $decoded);
+          return json_encode($normalized);
+        }
+        return '[]';
 
-    // Tipe text: sanitasi HTML
-    $allowedTags = '<p><br><strong><em><u><s><h1><h2><blockquote><ol><ul><li><a><img><code><pre><span>';
-    $clean = strip_tags($content,
-      $allowedTags);
-    $clean = preg_replace('/ on\w+="[^"]*"/i',
-      '',
-      $clean);
-    return $clean;
+      case NoteType::Text->value:
+        $allowedTags = '<p><br><strong><em><u><s><h1><h2><blockquote><ol><ul><li><a><img><code><pre><span>';
+        $clean = strip_tags($content,
+          $allowedTags);
+        $clean = preg_replace('/ on\w+="[^"]*"/i',
+          '',
+          $clean);
+        return $clean;
+
+      case NoteType::Image->value:
+      case NoteType::Voice->value:
+        $content = trim($content);
+        if (filter_var($content, FILTER_VALIDATE_URL)) {
+          return $content;
+        }
+        return strip_tags($content);
+
+      default:
+        return $content;
+    }
   }
 }

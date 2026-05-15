@@ -1,4 +1,4 @@
-// Page.js - Render setiap halaman
+// Page.js - Render setiap halaman (lengkap dengan image & voice)
 (function(window) {
   'use strict';
 
@@ -20,6 +20,8 @@
       });
 
       const getSummary = (note) => {
+        if (note.type === 'image') return '📷 Gambar';
+        if (note.type === 'voice') return '🎤 Suara';
         if (note.type === 'checklist') {
           try {
             const items = JSON.parse(note.content);
@@ -86,7 +88,6 @@
       `;
     },
 
-    // Fungsi bantu untuk render grid catatan (digunakan ulang saat pagination)
     renderNotesGrid(notes) {
       if (!notes || notes.length === 0) {
         return `
@@ -120,7 +121,15 @@
       if (!note) return `<div class="empty-state">Catatan tidak ditemukan.</div>`;
 
       let contentHtml = '';
-      if (note.type === 'checklist') {
+      if (note.type === 'image') {
+        contentHtml = `<img src="${helpers.escapeHtml(note.content)}" class="img-fluid rounded" alt="${helpers.escapeHtml(note.title)}" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23333%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%2210%22>Gagal memuat</text></svg>';">`;
+      } else if (note.type === 'voice') {
+        contentHtml = `
+        <audio controls class="w-100">
+        <source src="${helpers.escapeHtml(note.content)}" type="audio/mpeg">
+        Browser Anda tidak mendukung pemutar audio.
+        </audio>`;
+      } else if (note.type === 'checklist') {
         try {
           const items = JSON.parse(note.content);
           if (Array.isArray(items)) {
@@ -132,7 +141,7 @@
               return `
               <div class="d-flex align-items-center mb-2 checklist-item-row" data-index="${index}">
               <i class="bi ${done ? 'bi-check-square-fill text-success': 'bi-square'} me-2 checklist-toggle" style="cursor:pointer; font-size: 1.2rem;"></i>
-              <span class="${done ? 'text-decoration-line-through text-muted': ''} checklist-toggle">${helpers.escapeHtml(text)}</span>
+              <span class="${done ? 'text-decoration-line-through text-muted': ''}">${helpers.escapeHtml(text)}</span>
               </div>
               `;
             }).join('')}
@@ -171,7 +180,7 @@
       const tagNames = tags.map(t => t.name);
       const reminderAt = note.reminder ? note.reminder.remind_at: '';
       const reminderValue = reminderAt ? new Date(reminderAt).toISOString().slice(0, 16): '';
-      const isChecklist = note.type === 'checklist';
+      const type = note.type || 'text';
 
       return `
       <form id="note-form" class="card glass-card text-white border-0 p-3">
@@ -182,17 +191,21 @@
       <div class="mb-3">
       <label class="form-label">Tipe Catatan</label>
       <select name="type" id="note-type-select" class="form-select glass-input">
-      <option value="text" ${!isChecklist ? 'selected': ''}>📝 Teks</option>
-      <option value="checklist" ${isChecklist ? 'selected': ''}>✅ Checklist</option>
+      <option value="text" ${type === 'text' ? 'selected': ''}>📝 Teks</option>
+      <option value="checklist" ${type === 'checklist' ? 'selected': ''}>✅ Checklist</option>
+      <option value="image" ${type === 'image' ? 'selected': ''}>🖼️ Image</option>
+      <option value="voice" ${type === 'voice' ? 'selected': ''}>🎤 Voice</option>
       </select>
       </div>
 
-      <div id="quill-wrapper" class="mb-3" style="${isChecklist ? 'display:none;': ''}">
+      <!-- Text Editor -->
+      <div id="quill-wrapper" class="mb-3" style="${type === 'text' ? '': 'display:none;'}">
       <label class="form-label">Isi</label>
       <div id="editor-container" style="border-radius: 12px; overflow: hidden;"></div>
       </div>
 
-      <div id="checklist-wrapper" class="mb-3" style="${isChecklist ? '': 'display:none;'}">
+      <!-- Checklist Builder -->
+      <div id="checklist-wrapper" class="mb-3" style="${type === 'checklist' ? '': 'display:none;'}">
       <label class="form-label">Item Checklist</label>
       <div class="input-group mb-2">
       <input type="text" id="checklist-input" class="form-control glass-input" placeholder="Tambah item...">
@@ -201,6 +214,19 @@
       <div id="checklist-items" class="d-flex flex-column gap-1"></div>
       </div>
 
+      <!-- Image Input -->
+      <div id="image-wrapper" class="mb-3" style="${type === 'image' ? '': 'display:none;'}">
+      <label class="form-label">URL Gambar</label>
+      <input type="url" name="content" value="${helpers.escapeHtml(note.content || '')}" class="form-control glass-input" placeholder="https://...">
+      </div>
+
+      <!-- Voice Input -->
+      <div id="voice-wrapper" class="mb-3" style="${type === 'voice' ? '': 'display:none;'}">
+      <label class="form-label">URL Suara</label>
+      <input type="url" name="content" value="${helpers.escapeHtml(note.content || '')}" class="form-control glass-input" placeholder="https://...">
+      </div>
+
+      <!-- Hidden input untuk text & checklist -->
       <input type="hidden" name="content" value="">
 
       <div class="mb-3">
@@ -270,8 +296,8 @@
       <span class="badge bg-warning text-dark">${state.reminders.filter(r => !r.is_completed).length}</span>
       </div>
       </div>
-      <button id="logout-btn" class="btn btn-danger mt-4 w-100"><i class="bi bi-box-arrow-right"></i> Logout</button>
       <a href="#/notes/trash" class="btn btn-outline-light mt-2 w-100"><i class="bi bi-trash"></i> Trash</a>
+      <button id="logout-btn" class="btn btn-danger mt-2 w-100"><i class="bi bi-box-arrow-right"></i> Logout</button>
       `;
     },
 

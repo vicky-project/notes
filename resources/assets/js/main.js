@@ -1,4 +1,4 @@
-// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist, Pagination, Trash (fix sync)
+// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist, Image, Voice, Trash
 (function(window) {
   'use strict';
 
@@ -30,7 +30,7 @@
     };
   }
 
-  // Quill
+  // ---------- Quill ----------
   function destroyQuill() {
     if (quill) {
       const toolbar = document.querySelector('.ql-toolbar');
@@ -70,7 +70,7 @@
     });
   }
 
-  // Checklist
+  // ---------- Checklist ----------
   function getChecklistItems() {
     const c = document.getElementById('checklist-items');
     return c ? [...c.querySelectorAll('.checklist-item-text')].map(e => e.textContent.trim()): [];
@@ -93,7 +93,7 @@
     if (h) h.value = JSON.stringify(getChecklistItems());
   }
 
-  // Tag
+  // ---------- Tag ----------
   function getTagsFromHidden() {
     const h = document.querySelector('input[name="tags"][type="hidden"]');
     if (!h) return [];
@@ -136,67 +136,53 @@
     }
   }
 
-  // Form type
+  // ---------- Form Type Switcher ----------
   function initFormByType(type) {
-    const qw = document.getElementById('quill-wrapper');
-    const cw = document.getElementById('checklist-wrapper');
-    if (!qw || !cw) return;
-    if (type === 'checklist') {
-      qw.style.display = 'none'; cw.style.display = '';
-      destroyQuill();
-      let items = [];
-      if (state.currentNote?.content) {
-        try {
-          items = JSON.parse(state.currentNote.content); if (!Array.isArray(items)) items = [];
-        } catch {}
-      }
-      const container = document.getElementById('checklist-items');
-      if (container) {
-        container.innerHTML = '';
-        items.forEach(item => addChecklistItem(typeof item === 'string' ? item: (item.text || '')));
-      }
-      updateChecklistHidden();
-    } else {
-      qw.style.display = ''; cw.style.display = 'none';
-      initQuill(state.currentNote?.content || '');
+    const wrappers = {
+      quill: document.getElementById('quill-wrapper'),
+      checklist: document.getElementById('checklist-wrapper'),
+      image: document.getElementById('image-wrapper'),
+      voice: document.getElementById('voice-wrapper')
+    };
+    Object.values(wrappers).forEach(w => {
+      if (w) w.style.display = 'none';
+    });
+    destroyQuill();
+
+    switch (type) {
+      case 'text':
+        if (wrappers.quill) {
+          wrappers.quill.style.display = '';
+          setTimeout(() => initQuill(state.currentNote?.content || ''), 100);
+        }
+        break;
+      case 'checklist':
+        if (wrappers.checklist) {
+          wrappers.checklist.style.display = '';
+          let items = [];
+          if (state.currentNote?.content) {
+            try {
+              items = JSON.parse(state.currentNote.content); if (!Array.isArray(items)) items = [];
+            } catch {}
+          }
+          const container = document.getElementById('checklist-items');
+          if (container) {
+            container.innerHTML = '';
+            items.forEach(item => addChecklistItem(typeof item === 'string' ? item: (item.text || '')));
+          }
+          updateChecklistHidden();
+        }
+        break;
+      case 'image':
+        if (wrappers.image) wrappers.image.style.display = '';
+        break;
+      case 'voice':
+        if (wrappers.voice) wrappers.voice.style.display = '';
+        break;
     }
   }
 
-  // Pagination
-  async function loadNotesPage(page) {
-    tgApp.showLoading('Memuat...');
-    try {
-      const keyword = state.searchKeyword || '';
-      const data = await api.getNotes({
-        page, search: keyword
-      });
-      state.setState('notes', extractData(data));
-      state.setState('pagination', {
-        currentPage: data.current_page || page,
-        lastPage: data.last_page || 1
-      });
-      const listContainer = document.getElementById('notes-list-container');
-      if (listContainer) listContainer.innerHTML = Page.renderNotesGrid(state.notes);
-      renderNotesPagination();
-      window.scrollTo({
-        top: 0, behavior: 'smooth'
-      });
-    } catch(err) {
-      tgApp.showToast(err.message, 'danger');
-    }
-    finally {
-      tgApp.hideLoading();
-    }
-  }
-  function renderNotesPagination() {
-    const {
-      currentPage,
-      lastPage
-    } = state.pagination;
-    tgApp.renderPagination('pagination-container', currentPage, lastPage, page => loadNotesPage(page), false);
-  }
-
-  // Routing
+  // ---------- Routing ----------
   async function renderRoute(p) {
     let html = '';
     if (p.full === '/notes/home') {
@@ -239,10 +225,9 @@
         }
       }
       html = Page.profile();
-
     } else if (p.full === '/notes/trash') {
-      const data = await api.getTrashedNotes();
-      state.setState('trashedNotes', data.data || data);
+      const d = await api.getTrashedNotes();
+      state.setState('trashedNotes', d.data || d);
       html = Page.trash();
     } else if (p.isEdit && p.parts.length >= 2) {
       const id = p.parts[1];
@@ -301,149 +286,173 @@
     });
   }
 
-  // Events
-  function setupGlobalEvents() {
-    document.body.addEventListener('click',
-      async (e) => {
-        const anchor = e.target.closest('a');
-        if (anchor && anchor.getAttribute('href')?.startsWith('#')) {
-          e.preventDefault();
-          window.location.hash = anchor.getAttribute('href');
-          return;
-        }
-        const deleteBtn = e.target.closest('[data-delete-note]');
-        if (deleteBtn) {
-          const id = deleteBtn.dataset.deleteNote;
-          if (confirm('Hapus catatan ini?')) {
-            try {
-              await api.deleteNote(id);
-              tgApp.showToast('Catatan dihapus', 'success');
-              window.location.hash = '#/notes/all';
-            } catch(err) {
-              tgApp.showToast(err.message, 'danger');
-            }
-          }
-        }
-        const completeBtn = e.target.closest('[data-complete-reminder]');
-        if (completeBtn) {
-          const id = completeBtn.dataset.completeReminder;
-          try {
-            await api.completeReminder(id);
-            tgApp.showToast('Pengingat selesai', 'success');
-            navigateTo(window.location.hash);
-          } catch(err) {
-            tgApp.showToast(err.message, 'danger');
-          }
-        }
-        const removeBtn = e.target.closest('[data-remove-tag]');
-        if (removeBtn) {
-          e.preventDefault();
-          removeTag(removeBtn.dataset.removeTag);
-        }
-        if (e.target.id === 'add-checklist-btn') {
-          e.preventDefault();
-          const input = document.getElementById('checklist-input');
-          if (input) {
-            const text = input.value.trim();
-            if (text) {
-              addChecklistItem(text); input.value = ''; input.focus();
-            }
-          }
-        }
-        if (e.target.classList.contains('remove-checklist-item')) {
-          e.preventDefault();
-          removeChecklistItem(e.target);
-        }
-
-        // Toggle checklist (FIXED)
-        const toggleCheck = e.target.closest('.checklist-toggle');
-        if (toggleCheck) {
-          e.preventDefault();
-          const row = toggleCheck.closest('.checklist-item-row');
-          if (!row) return;
-          const index = parseInt(row.dataset.index, 10);
-          const note = state.currentNote;
-          if (!note || note.type !== 'checklist') return;
-          try {
-            const items = JSON.parse(note.content);
-            if (index >= 0 && index < items.length) {
-              const item = items[index];
-              const text = item.text || item;
-              const newDone = !item.done;
-              items[index] = {
-                text,
-                done: newDone
-              };
-              const updatedContent = JSON.stringify(items);
-
-              // Update currentNote
-              state.setState('currentNote', {
-                ...note, content: updatedContent
-              });
-
-              // Update notes array (fix home tidak terupdate)
-              const updatedNotes = state.notes.map(n => n.id === note.id ? {
-                ...n, content: updatedContent
-              }: n);
-              state.setState('notes', updatedNotes);
-
-              // DOM update
-              const icon = row.querySelector('.checklist-toggle');
-              const span = row.querySelector('span');
-              if (newDone) {
-                icon.classList.remove('bi-square');
-                icon.classList.add('bi-check-square-fill', 'text-success');
-                span.classList.add('text-decoration-line-through', 'text-muted');
-              } else {
-                icon.classList.remove('bi-check-square-fill', 'text-success');
-                icon.classList.add('bi-square');
-                span.classList.remove('text-decoration-line-through', 'text-muted');
-              }
-
-              api.updateNote(note.id, {
-                content: updatedContent, type: 'checklist'
-              })
-              .catch(err => tgApp.showToast('Gagal menyimpan: ' + err.message, 'danger'));
-            }
-          } catch(err) {
-            tgApp.showToast('Data checklist rusak', 'danger');
-          }
-        }
-
-        // Trash
-        const restoreBtn = e.target.closest('[data-restore-note]');
-        if (restoreBtn) {
-          e.preventDefault();
-          const id = restoreBtn.dataset.restoreNote;
-          try {
-            await api.restoreNote(id);
-            tgApp.showToast('Catatan dipulihkan', 'success');
-            navigateTo(window.location.hash);
-          } catch(err) {
-            tgApp.showToast(err.message, 'danger');
-          }
-        }
-        const forceDeleteBtn = e.target.closest('[data-force-delete-note]');
-        if (forceDeleteBtn) {
-          e.preventDefault();
-          const id = forceDeleteBtn.dataset.forceDeleteNote;
-          if (confirm('Hapus permanen? Tindakan ini tidak dapat dibatalkan.')) {
-            try {
-              await api.forceDeleteNote(id);
-              tgApp.showToast('Catatan dihapus permanen', 'success');
-              navigateTo(window.location.hash);
-            } catch(err) {
-              tgApp.showToast(err.message, 'danger');
-            }
-          }
-        }
-
-        if (e.target.id === 'logout-btn') {
-          localStorage.removeItem('telegram_token');
-          tgApp.showToast('Logout berhasil', 'success');
-          if (window.Telegram?.WebApp) window.Telegram.WebApp.close();
-        }
+  // ---------- Pagination ----------
+  async function loadNotesPage(page) {
+    tgApp.showLoading('Memuat...');
+    try {
+      const keyword = state.searchKeyword || '';
+      const d = await api.getNotes({
+        page,
+        search: keyword
       });
+      state.setState('notes',
+        extractData(d));
+      state.setState('pagination',
+        {
+          currentPage: d.current_page || page,
+          lastPage: d.last_page || 1
+        });
+      const listContainer = document.getElementById('notes-list-container');
+      if (listContainer) listContainer.innerHTML = Page.renderNotesGrid(state.notes);
+      renderNotesPagination();
+      window.scrollTo({
+        top: 0, behavior: 'smooth'
+      });
+    } catch(err) {
+      tgApp.showToast(err.message, 'danger');
+    }
+    finally {
+      tgApp.hideLoading();
+    }
+  }
+  function renderNotesPagination() {
+    const {
+      currentPage,
+      lastPage
+    } = state.pagination;
+    tgApp.renderPagination('pagination-container', currentPage, lastPage, page => loadNotesPage(page), false);
+  }
+
+  // ---------- Events ----------
+  function setupGlobalEvents() {
+    document.body.addEventListener('click', async (e) => {
+      const anchor = e.target.closest('a');
+      if (anchor && anchor.getAttribute('href')?.startsWith('#')) {
+        e.preventDefault();
+        window.location.hash = anchor.getAttribute('href');
+        return;
+      }
+      const deleteBtn = e.target.closest('[data-delete-note]');
+      if (deleteBtn) {
+        const id = deleteBtn.dataset.deleteNote;
+        if (confirm('Hapus catatan ini?')) {
+          try {
+            await api.deleteNote(id);
+            tgApp.showToast('Catatan dihapus', 'success');
+            window.location.hash = '#/notes/all';
+          } catch(err) {
+            tgApp.showToast(err.message, 'danger');
+          }
+        }
+      }
+      const completeBtn = e.target.closest('[data-complete-reminder]');
+      if (completeBtn) {
+        const id = completeBtn.dataset.completeReminder;
+        try {
+          await api.completeReminder(id);
+          tgApp.showToast('Pengingat selesai', 'success');
+          navigateTo(window.location.hash);
+        } catch(err) {
+          tgApp.showToast(err.message, 'danger');
+        }
+      }
+      const removeBtn = e.target.closest('[data-remove-tag]');
+      if (removeBtn) {
+        e.preventDefault();
+        removeTag(removeBtn.dataset.removeTag);
+      }
+      if (e.target.id === 'add-checklist-btn') {
+        e.preventDefault();
+        const input = document.getElementById('checklist-input');
+        if (input) {
+          const text = input.value.trim();
+          if (text) {
+            addChecklistItem(text); input.value = ''; input.focus();
+          }
+        }
+      }
+      if (e.target.classList.contains('remove-checklist-item')) {
+        e.preventDefault();
+        removeChecklistItem(e.target);
+      }
+      const toggleCheck = e.target.closest('.checklist-toggle');
+      if (toggleCheck) {
+        e.preventDefault();
+        const row = toggleCheck.closest('.checklist-item-row');
+        if (!row) return;
+        const index = parseInt(row.dataset.index, 10);
+        const note = state.currentNote;
+        if (!note || note.type !== 'checklist') return;
+        try {
+          const items = JSON.parse(note.content);
+          if (index >= 0 && index < items.length) {
+            const item = items[index];
+            const text = item.text || item;
+            const newDone = !item.done;
+            items[index] = {
+              text,
+              done: newDone
+            };
+            const updatedContent = JSON.stringify(items);
+            state.setState('currentNote', {
+              ...note, content: updatedContent
+            });
+            const updatedNotes = state.notes.map(n => n.id === note.id ? {
+              ...n, content: updatedContent
+            }: n);
+            state.setState('notes', updatedNotes);
+            const icon = row.querySelector('.checklist-toggle');
+            const span = row.querySelector('span');
+            if (newDone) {
+              icon.classList.remove('bi-square');
+              icon.classList.add('bi-check-square-fill', 'text-success');
+              span.classList.add('text-decoration-line-through', 'text-muted');
+            } else {
+              icon.classList.remove('bi-check-square-fill', 'text-success');
+              icon.classList.add('bi-square');
+              span.classList.remove('text-decoration-line-through', 'text-muted');
+            }
+            api.updateNote(note.id, {
+              content: updatedContent, type: 'checklist'
+            })
+            .catch(err => tgApp.showToast('Gagal menyimpan: ' + err.message, 'danger'));
+          }
+        } catch(err) {
+          tgApp.showToast('Data checklist rusak', 'danger');
+        }
+      }
+      const restoreBtn = e.target.closest('[data-restore-note]');
+      if (restoreBtn) {
+        e.preventDefault();
+        const id = restoreBtn.dataset.restoreNote;
+        try {
+          await api.restoreNote(id);
+          tgApp.showToast('Catatan dipulihkan', 'success');
+          navigateTo(window.location.hash);
+        } catch(err) {
+          tgApp.showToast(err.message, 'danger');
+        }
+      }
+      const forceDeleteBtn = e.target.closest('[data-force-delete-note]');
+      if (forceDeleteBtn) {
+        e.preventDefault();
+        const id = forceDeleteBtn.dataset.forceDeleteNote;
+        if (confirm('Hapus permanen?')) {
+          try {
+            await api.forceDeleteNote(id);
+            tgApp.showToast('Catatan dihapus permanen', 'success');
+            navigateTo(window.location.hash);
+          } catch(err) {
+            tgApp.showToast(err.message, 'danger');
+          }
+        }
+      }
+      if (e.target.id === 'logout-btn') {
+        localStorage.removeItem('telegram_token');
+        tgApp.showToast('Logout berhasil', 'success');
+        if (window.Telegram?.WebApp) window.Telegram.WebApp.close();
+      }
+    });
 
     document.body.addEventListener('change',
       e => {
@@ -478,11 +487,22 @@
           tgApp.showLoading('Menyimpan catatan...');
 
           commitPendingTag();
-          let contentValue = quill ? quill.root.innerHTML: JSON.stringify(getChecklistItems());
+
+          const type = form.querySelector('select[name="type"]').value;
+          let contentValue = '';
+          if (type === 'text' && quill) {
+            contentValue = quill.root.innerHTML;
+          } else if (type === 'checklist') {
+            contentValue = JSON.stringify(getChecklistItems());
+          } else {
+            const contentInput = form.querySelector('input[name="content"]:not([type="hidden"])');
+            contentValue = contentInput ? contentInput.value.trim(): '';
+          }
+
           const tagsArray = getTagsFromHidden();
           const data = {
             title: form.querySelector('input[name="title"]').value.trim(),
-            type: form.querySelector('select[name="type"]').value,
+            type: type,
             content: contentValue,
             tags: tagsArray,
             reminder_at: form.querySelector('input[name="reminder_at"]').value || null
