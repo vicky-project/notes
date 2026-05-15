@@ -54,8 +54,16 @@ class NoteController extends Controller
   */
   public function trashed(Request $request) {
     $user = $request->user();
-    $notes = $this->noteService->getTrashedNotes($user->id);
-    return NoteResource::collection($notes);
+    try {
+      $notes = $this->noteService->getTrashedNotes($user->id);
+      return NoteResource::collection($notes);
+    } catch (\Exception $e) {
+      \Log::error("Failed to get trashed", [
+        'message' => $e->getMessage(),
+        'trace' => $e->getTrace()
+      ]):
+      return NoteResource::collection([]);
+    }
   }
 
   /**
