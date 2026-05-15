@@ -79,8 +79,27 @@
       <div class="mb-4">
       <input type="text" id="search-notes" class="form-control glass-input" placeholder="Cari catatan...">
       </div>
-      <div id="notes-container" class="row g-2">
-      ${state.notes.length ? state.notes.map(note => `
+      <div id="notes-list-container">
+      ${this.renderNotesGrid(state.notes)}
+      </div>
+      <div id="pagination-container" class="mt-3"></div>
+      `;
+    },
+
+    // Fungsi bantu untuk render grid catatan (digunakan ulang saat pagination)
+    renderNotesGrid(notes) {
+      if (!notes || notes.length === 0) {
+        return `
+        <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p class="mb-2">Tidak ada catatan ditemukan.</p>
+        <a href="#/notes/create" class="btn btn-warning btn-sm">Buat Baru</a>
+        </div>
+        `;
+      }
+      return `
+      <div class="row g-2">
+      ${notes.map(note => `
         <div class="col-12">
         <a href="#/notes/${note.id}" class="card note-card text-white text-decoration-none border-0">
         <div class="card-body">
@@ -91,13 +110,7 @@
         </div>
         </a>
         </div>
-        `).join(''): `
-      <div class="empty-state">
-      <i class="bi bi-inbox"></i>
-      <p class="mb-2">Tidak ada catatan ditemukan.</p>
-      <a href="#/notes/create" class="btn btn-warning btn-sm">Buat Baru</a>
-      </div>
-      `}
+        `).join('')}
       </div>
       `;
     },

@@ -226,8 +226,16 @@
       }
       html = Page.home();
     } else if (full === '/notes/all') {
-      const data = await api.getNotes();
+      const keyword = state.searchKeyword || '';
+      const data = await api.getNotes({
+        page: 1,
+        search: keyword
+      });
       state.setState('notes', extractData(data));
+      state.setState('pagination', {
+        currentPage: data.current_page || 1,
+        lastPage: data.last_page || 1
+      });
       html = Page.notesList();
     } else if (full === '/notes/create') {
       state.setState('currentNote', null);
@@ -285,6 +293,8 @@
           const typeSelect = document.getElementById('note-type-select');
           const currentType = typeSelect?.value || 'text';
           initFormByType(currentType);
+        } else if (parsed.full === '/notes/all') {
+          renderNotesPagination();
         } else {
           destroyQuill();
         }
@@ -296,6 +306,51 @@
     } finally {
       tgApp.hideLoading();
     }
+  }
+
+  async function loadNotesPage(page) {
+    tgApp.showLoading('Memuat...');
+    try {
+      const data = await api.getNotes({
+        page,
+        search: state.searchKeyword || ''
+      });
+      state.setState('notes',
+        extractData(data));
+      state.setState('pagination',
+        {
+          currentPage: data.current_page || page,
+          lastPage: data.last_page || 1
+        });
+      // Update daftar catatan
+      const listContainer = document.getElementById('notes-list-container');
+      if (listContainer) {
+        listContainer.innerHTML = Page.renderNotesGrid(state.notes);
+      }
+      // Update pagination
+      renderNotesPagination();
+    } catch (error) {
+      tgApp.showToast(error.message, 'danger');
+    } finally {
+      tgApp.hideLoading();
+    }
+  }
+
+  function renderNotesPagination() {
+    const {
+      currentPage,
+      lastPage
+    } = state.pagination;
+    // Gunakan fungsi dari TelegramApp
+    tgApp.renderPagination(
+      'pagination-container',
+      // container ID
+      currentPage,
+      lastPage,
+      (page) => loadNotesPage(page),
+      // callback
+      true // scrollToTop
+    );
   }
 
   function updateActiveNav(path) {
@@ -509,12 +564,22 @@
       });
 
     const debouncedSearch = helpers.debounce(async (keyword) => {
+      state.setState('searchKeyword', keyword);
       try {
         const data = await api.getNotes({
+          page: 1,
           search: keyword
         });
         state.setState('notes', extractData(data));
-        document.getElementById('app-content').innerHTML = Page.notesList();
+        state.setState('pagination', {
+          currentPage: data.current_page || 1,
+          lastPage: data.last_page || 1
+        });
+        const listContainer = document.getElementById('notes-list-container');
+        if (listContainer) {
+          listContainer.innerHTML = Page.renderNotesGrid(state.notes);
+        }
+        renderNotesPagination();
       } catch (err) {
         tgApp.showToast(err.message, 'danger');
       }

@@ -25,6 +25,10 @@
     },
     notify() {
       this.listeners.forEach(fn => fn(this));
+    },
+    pagination: {
+      currentPage: 1,
+      lastPage: 1
     }
   };
 
