@@ -31,7 +31,7 @@ class AIService
 
     // Siapkan konteks untuk Gemini
     $notesContext = [];
-    foreach ($notes as $i => $note) {
+    foreach ($notes as $note) {
       $plainContent = strip_tags($note['content'] ?? '');
       $notesContext[] = [
         'id' => $note['id'],
@@ -52,7 +52,7 @@ class AIService
   public function summarize(string $content, string $title = ''): string
   {
     if (!$this->isEnabled() || empty(trim($content))) {
-      return 'Fitur AI tidak tersedia';
+      return '(Fitur AI tidak tersedia atau konten kosong)';
     }
 
     $plainContent = strip_tags($content);
@@ -105,6 +105,28 @@ class AIService
   }
 
   /**
+  * Membangun prompt untuk pencarian semantik.
+  */
+  protected function buildSearchPrompt(array $notes, string $query): string
+  {
+    $notesJson = json_encode($notes, JSON_UNESCAPED_UNICODE);
+    $prompt = "Kamu adalah asisten pencarian cerdas untuk aplikasi catatan pribadi.\n";
+    $prompt .= "Pengguna akan memberikan query dalam bahasa Indonesia, dan kamu harus mencari catatan yang paling relevan.\n\n";
+    $prompt .= "Berikut adalah daftar catatan pengguna (dalam format JSON):\n";
+    $prompt .= $notesJson . "\n\n";
+    $prompt .= "Query pencarian: \"{$query}\"\n\n";
+    $prompt .= "Tugas kamu:\n";
+    $prompt .= "1. Analisis query pencarian dan semua catatan di atas.\n";
+    $prompt .= "2. Pilih catatan yang paling relevan dengan query (maksimal 5).\n";
+    $prompt .= "3. Kembalikan HANYA array JSON berisi ID catatan yang relevan, misalnya: [1, 5, 12].\n";
+    $prompt .= "4. Jika tidak ada yang relevan, kembalikan array kosong: [].\n";
+    $prompt .= "5. JANGAN berikan penjelasan apapun, HANYA array JSON.\n\n";
+    $prompt .= "Jawaban:";
+
+    return $prompt;
+  }
+
+  /**
   * Parse hasil pencarian dari Gemini.
   */
   protected function parseSearchResponse(?string $response): array
@@ -117,31 +139,5 @@ class AIService
 
     $ids = json_decode($response, true);
     return is_array($ids) ? $ids : [];
-  }
-
-  /**
-  * Membangun prompt untuk pencarian semantik.
-  */
-  protected function buildSearchPrompt(array $notes, string $query): string
-  {
-    $notesJson = json_encode($notes, JSON_UNESCAPED_UNICODE);
-    return <<<EOT
-Kamu adalah asisten pencarian cerdas untuk aplikasi catatan pribadi.
-Pengguna akan memberikan query dalam bahasa Indonesia, dan kamu harus mencari catatan yang paling relevan.
-
-Berikut adalah daftar catatan pengguna (dalam format JSON):
-{$notesJson}
-
-Query pencarian: "{$query}"
-
-Tugas kamu:
-1. Analisis query pencarian dan semua catatan di atas.
-2. Pilih catatan yang paling relevan dengan query (maksimal 5).
-3. Kembalikan HANYA array JSON berisi ID catatan yang relevan, misalnya: [1, 5, 12].
-4. Jika tidak ada yang relevan, kembalikan array kosong: [].
-5. JANGAN berikan penjelasan apapun, HANYA array JSON.
-
-Jawaban:
-    EOT;
   }
 }
