@@ -1,4 +1,4 @@
-// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist, Image, Voice, Trash
+// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist, Image, Voice, Trash, Focus Mode
 (function(window) {
   'use strict';
 
@@ -16,6 +16,7 @@
   const Page = window.Page;
 
   let quill = null;
+  let isFullscreen = false; // <-- tambahkan variabel ini
 
   function extractData(r) {
     return r?.data || r;
@@ -57,7 +58,8 @@
             'list': 'bullet'
           }],
           [{
-            'header': [1, 2, false]}],
+            'header': [1, 2, false]
+          }],
           ['link'],
           ['clean']
         ]
@@ -182,6 +184,41 @@
     }
   }
 
+  // ---------- Focus Mode Functions (TAMBAHAN) ----------
+  function enterFocusMode() {
+    const quillWrapper = document.getElementById('quill-wrapper');
+    if (!quillWrapper) return;
+
+    quillWrapper.classList.add('fullscreen-editor');
+    document.body.classList.add('fullscreen-active');
+    isFullscreen = true;
+
+    let exitBtn = document.getElementById('exit-fullscreen-btn');
+    if (!exitBtn) {
+      exitBtn = document.createElement('button');
+      exitBtn.id = 'exit-fullscreen-btn';
+      exitBtn.className = 'btn btn-sm btn-outline-light exit-fullscreen-btn';
+      exitBtn.innerHTML = '<i class="bi bi-fullscreen-exit"></i> Keluar';
+      quillWrapper.appendChild(exitBtn);
+    }
+
+    if (quill) quill.focus();
+  }
+
+  function exitFocusMode() {
+    const quillWrapper = document.getElementById('quill-wrapper');
+    if (!quillWrapper) return;
+
+    quillWrapper.classList.remove('fullscreen-editor');
+    document.body.classList.remove('fullscreen-active');
+    isFullscreen = false;
+
+    const exitBtn = document.getElementById('exit-fullscreen-btn');
+    if (exitBtn) exitBtn.remove();
+
+    if (quill) quill.focus();
+  }
+
   // ---------- Routing ----------
   async function renderRoute(p) {
     let html = '';
@@ -246,6 +283,9 @@
   }
 
   async function navigateTo(hash) {
+    // Keluar dari mode fokus saat pindah halaman
+    exitFocusMode();
+
     const parsed = parsePath(hash);
     state.setState('activeRoute', parsed.full);
     tgApp.showLoading('Memuat...');
@@ -452,6 +492,16 @@
         tgApp.showToast('Logout berhasil', 'success');
         if (window.Telegram?.WebApp) window.Telegram.WebApp.close();
       }
+
+      // ---------- Focus Mode Events (TAMBAHAN) ----------
+      if (e.target.id === 'focus-mode-btn' || e.target.closest('#focus-mode-btn')) {
+        e.preventDefault();
+        enterFocusMode();
+      }
+      if (e.target.id === 'exit-fullscreen-btn' || e.target.closest('#exit-fullscreen-btn')) {
+        e.preventDefault();
+        exitFocusMode();
+      }
     });
 
     document.body.addEventListener('change',
@@ -556,6 +606,19 @@
         if (e.target.id === 'tag-input' && (e.key === ',' || e.key === 'Enter')) {
           e.preventDefault();
           commitPendingTag();
+        }
+      });
+
+    // ---------- Keyboard Shortcut for Focus Mode (TAMBAHAN) ----------
+    document.addEventListener('keydown',
+      (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'F') {
+          e.preventDefault();
+          if (isFullscreen) {
+            exitFocusMode();
+          } else if (document.getElementById('quill-wrapper')?.style.display !== 'none') {
+            enterFocusMode();
+          }
         }
       });
   }

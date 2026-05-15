@@ -200,7 +200,10 @@
 
       <!-- Text Editor -->
       <div id="quill-wrapper" class="mb-3" style="${type === 'text' ? '': 'display:none;'}">
-      <label class="form-label">Isi</label>
+      <div class="d-flex justify-content-between align-items-center mb-1">
+      <label class="form-label mb-0">Isi</label>
+      <button type="button" id="focus-mode-btn" class="btn btn-sm btn-outline-light"><i class="bi bi-arrows-fullscreen"></i> Fokus</button>
+      </div>
       <div id="editor-container" style="border-radius: 12px; overflow: hidden;"></div>
       </div>
 
