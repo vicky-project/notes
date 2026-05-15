@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Notes\Http\Controllers\Api\AIController;
 use Modules\Notes\Http\Controllers\Api\NoteController;
 use Modules\Notes\Http\Controllers\Api\NoteIntegrationController;
 use Modules\Notes\Http\Controllers\Api\ReminderController;
@@ -14,6 +15,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('trashed', [NoteController::class, 'trashed']);
     Route::patch('{id}/restore', [NoteController::class, 'restore']);
     Route::delete('{id}/force', [NoteController::class, 'forceDelete']);
+  });
+
+  Route::prefix('ai')->group(function() {
+    Route::get('search', [AIController::class, 'search']);
+    Route::post('notes/{id}/summarize', [AIController::class, 'summarize']);
   });
 
   Route::prefix('integration')->group(function() {

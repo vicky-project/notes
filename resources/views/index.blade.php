@@ -46,6 +46,9 @@
 </script>
 <script>
   const BASE_URL = '{{ rtrim(config("app.url"), "/") }}';
+  window.NotesConfig = {
+    aiEnabled: {{ $aiEnabled ? 'true' : 'false'}}
+  };
   {!! file_get_contents(module_path('notes', 'resources/assets/js/core.js')); !!}
   {!! file_get_contents(module_path('notes', 'resources/assets/js/page.js')); !!}
   {!! file_get_contents(module_path('notes', 'resources/assets/js/main.js')); !!}

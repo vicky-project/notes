@@ -1,4 +1,4 @@
-// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist, Image, Voice, Trash, Focus Mode
+// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist, Image, Voice, Trash, AI
 (function(window) {
   'use strict';
 
@@ -452,6 +452,67 @@
         localStorage.removeItem('telegram_token');
         tgApp.showToast('Logout berhasil', 'success');
         if (window.Telegram?.WebApp) window.Telegram.WebApp.close();
+      }
+
+      // ---------- AI Events ----------
+      if (state.aiEnabled) {
+        // AI Search button
+        if (e.target.id === 'ai-search-btn' || e.target.closest('#ai-search-btn')) {
+          e.preventDefault();
+          const searchInput = document.getElementById('search-notes');
+          const query = searchInput?.value.trim();
+          if (!query || query.length < 3) {
+            tgApp.showToast('Ketik minimal 3 karakter untuk pencarian AI', 'warning');
+            return;
+          }
+          tgApp.showLoading('AI sedang mencari...');
+          try {
+            const result = await api.aiSearch(query);
+            const notes = extractData(result);
+            state.setState('notes', notes);
+            const listContainer = document.getElementById('notes-list-container');
+            if (listContainer) listContainer.innerHTML = Page.renderNotesGrid(notes);
+            renderNotesPagination();
+            tgApp.showToast(`Ditemukan ${notes.length} catatan relevan`, 'success');
+          } catch (err) {
+            tgApp.showToast('Pencarian AI gagal: ' + err.message, 'danger');
+          } finally {
+            tgApp.hideLoading();
+          }
+        }
+
+        // Summarize button
+        if (e.target.id === 'summarize-btn' || e.target.closest('#summarize-btn')) {
+          e.preventDefault();
+          const note = state.currentNote;
+          if (!note) return;
+          const btn = document.getElementById('summarize-btn');
+          if (!btn) return;
+          btn.disabled = true;
+          const originalHtml = btn.innerHTML;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Meringkas...';
+          try {
+            const result = await api.summarizeNote(note.id);
+            const summaryDiv = document.getElementById('ai-summary');
+            if (summaryDiv && result.summary) {
+              summaryDiv.innerHTML = `
+              <div class="card bg-warning bg-opacity-10 border-warning p-3 mt-2">
+              <h6 class="text-warning"><i class="bi bi-stars me-1"></i>Ringkasan AI</h6>
+              <p class="mb-0">${result.summary}</p>
+              </div>
+              `;
+            }
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Teringkas';
+            setTimeout(() => {
+              btn.disabled = false;
+              btn.innerHTML = originalHtml;
+            }, 3000);
+          } catch (err) {
+            tgApp.showToast('Gagal merangkum: ' + err.message, 'danger');
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+          }
+        }
       }
     });
 

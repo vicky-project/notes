@@ -77,9 +77,18 @@
     },
 
     notesList() {
+      const aiButton = state.aiEnabled ? `
+      <button id="ai-search-btn" class="btn btn-outline-warning" title="Cari dengan AI">
+      <i class="bi bi-stars"></i>
+      </button>`: '';
+
       return `
       <div class="mb-4">
+      <div class="input-group">
       <input type="text" id="search-notes" class="form-control glass-input" placeholder="Cari catatan...">
+      ${aiButton}
+      </div>
+      ${state.aiEnabled ? '<small class="text-muted">Coba tanya: "catatan tentang proyek minggu lalu"</small>': ''}
       </div>
       <div id="notes-list-container">
       ${this.renderNotesGrid(state.notes)}
@@ -155,6 +164,10 @@
         contentHtml = note.content || '';
       }
 
+      const summarizeBtn = state.aiEnabled && note.type === 'text' && note.content?.length > 100 ? `
+      <button id="summarize-btn" class="btn btn-outline-warning btn-sm"><i class="bi bi-stars me-1"></i> Ringkas AI</button>
+      `: '';
+
       return `
       <div class="card glass-card text-white border-0">
       <div class="card-body">
@@ -168,6 +181,7 @@
       <div class="d-flex gap-2 mt-3">
       <a href="#/notes/${note.id}/edit" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> Edit</a>
       <button data-delete-note="${note.id}" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> Hapus</button>
+      ${summarizeBtn}
       </div>
       </div>
       </div>

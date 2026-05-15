@@ -31,6 +31,7 @@
       lastPage: 1
     },
     trashedNotes: [],
+    aiEnabled: window.NotesConfig?.aiEnabled ?? false,
   };
 
   const api = {
