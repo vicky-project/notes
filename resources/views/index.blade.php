@@ -3,7 +3,7 @@
 @section('title', 'Notes')
 
 @section('content')
-<div id="app-content" class="p-3 pb-5 mb-3">
+<div id="app-content" class="p-3 pb-5 mb-5">
   <div class="d-flex justify-content-center align-items-center" style="height: 60vh;">
     <div class="text-center">
       <div class="spinner-border text-secondary mb-2" role="status">
