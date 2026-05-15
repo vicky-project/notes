@@ -1,5 +1,8 @@
 <?php
 
 return [
-    'name' => 'Notes',
+  'name' => 'Notes',
+  'integration' => [
+    'endpoint' => 'api/integration/note'
+  ]
 ];
