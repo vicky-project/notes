@@ -17,7 +17,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
   });
 
   Route::prefix('integration')->group(function() {
-    Route::get('note', [NoteIntegrationController::class, 'store']);
+    Route::post('note', [NoteIntegrationController::class, 'store']);
   });
   Route::apiResource('notes', NoteController::class)->names('notes');
 });
