@@ -6,7 +6,7 @@ return [
     'endpoint' => 'api/integration/note'
   ],
   'ai' => [
-    'enabled' => (bool) env('GEMINI_API_KEY', false),
-    'api_key' => env('GEMINI_API_KEY', ''),
+    'enabled' => (bool) env('GROQ_API_KEY', false),
+    'api_key' => env('GROQ_API_KEY', ''),
   ],
 ];

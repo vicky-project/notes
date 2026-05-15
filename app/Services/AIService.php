@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Log;
 class AIService
 {
   protected string $apiKey;
-  protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent';
+  // Gunakan endpoint Chat Completions Groq yang kompatibel dengan OpenAI
+  protected string $baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  protected string $model = 'llama3-8b-8192';
 
   public function __construct() {
     $this->apiKey = config('notes.ai.api_key', '');
@@ -29,7 +31,6 @@ class AIService
       return [];
     }
 
-    // Siapkan konteks untuk Gemini
     $notesContext = [];
     foreach ($notes as $note) {
       $plainContent = strip_tags($note['content'] ?? '');
@@ -41,7 +42,7 @@ class AIService
     }
 
     $prompt = $this->buildSearchPrompt($notesContext, $query);
-    $response = $this->callGemini($prompt);
+    $response = $this->callApi($prompt);
 
     return $this->parseSearchResponse($response);
   }
@@ -62,44 +63,40 @@ class AIService
     }
     $prompt .= "Isi:\n{$plainContent}";
 
-    return $this->callGemini($prompt) ?? '(Gagal merangkum)';
+    return $this->callApi($prompt) ?? '(Gagal merangkum)';
   }
 
   /**
-  * Memanggil Gemini API.
+  * Memanggil Groq API.
   */
-  protected function callGemini(string $prompt): ?string
+  protected function callApi(string $prompt): ?string
   {
     if (empty($this->apiKey)) {
-      Log::warning('Gemini API key tidak tersedia');
+      Log::warning('Groq API key tidak tersedia');
       return null;
     }
 
     try {
       $response = Http::timeout(30)
-      ->post($this->baseUrl . '?key=' . $this->apiKey, [
-        'contents' => [
-          [
-            'parts' => [
-              ['text' => $prompt]
-            ]
-          ]
+      ->withToken($this->apiKey)
+      ->post($this->baseUrl, [
+        'model' => $this->model,
+        'messages' => [
+          ['role' => 'user', 'content' => $prompt]
         ],
-        'generationConfig' => [
-          'temperature' => 0.3,
-          'maxOutputTokens' => 1000,
-        ]
+        'temperature' => 0.3,
+        'max_tokens' => 1000,
       ]);
 
       if ($response->successful()) {
         $data = $response->json();
-        return $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
+        return $data['choices'][0]['message']['content'] ?? null;
       }
 
-      Log::error('Gemini API error', ['status' => $response->status(), 'body' => $response->body()]);
+      Log::error('Groq API error', ['status' => $response->status(), 'body' => $response->body()]);
       return null;
     } catch (\Exception $e) {
-      Log::error('Gemini API exception', ['message' => $e->getMessage()]);
+      Log::error('Groq API exception', ['message' => $e->getMessage()]);
       return null;
     }
   }
@@ -127,13 +124,12 @@ class AIService
   }
 
   /**
-  * Parse hasil pencarian dari Gemini.
+  * Parse hasil pencarian dari Groq.
   */
   protected function parseSearchResponse(?string $response): array
   {
     if (!$response) return [];
 
-    // Bersihkan respons: kadang Gemini membungkus JSON dalam ```json ... ```
     $response = trim($response);
     $response = preg_replace('/^```(?:json)?\s*|```$/i', '', $response);
 
