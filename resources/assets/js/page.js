@@ -173,6 +173,7 @@
       <div class="card-body">
       <h5 class="card-title">${helpers.escapeHtml(note.title)}</h5>
       <div class="card-text">${contentHtml}</div>
+      <div id="ai-summary" class="mt-3"></div>
       ${note.tags?.length ? `
       <div class="d-flex flex-wrap gap-1 mt-3">
       ${note.tags.map(tag => `<span class="badge bg-secondary">${helpers.escapeHtml(tag.name)}</span>`).join('')}
