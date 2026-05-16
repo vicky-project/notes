@@ -35,7 +35,7 @@ class ReminderRepository
     return Reminder::where('remind_at', '<=', Carbon::now())
     ->where('is_completed', false)
     ->whereNull('notified_at')
-    ->with('note.user') // pastikan relasi note -> user
+    ->with(['note.user']) // pastikan relasi note -> user
     ->get()
     ->all();
   }
