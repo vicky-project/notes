@@ -359,6 +359,25 @@
         }
       }
 
+      const deleteReminderBtn = e.target.closest('[data-delete-reminder]');
+      if (deleteReminderBtn) {
+        const id = deleteReminderBtn.dataset.deleteReminder;
+        if (confirm('Hapus pengingat ini?')) {
+          try {
+            await api.deleteReminder(id);
+            state.setState('reminders', state.reminders.filter(r => r.id != id));
+            tgApp.showToast('Pengingat dihapus', 'success');
+            if (state.activeRoute === '/notes/reminders') {
+              document.getElementById('app-content').innerHTML = Page.reminders();
+            } else if (state.activeRoute === '/notes/home') {
+              document.getElementById('app-content').innerHTML = Page.home();
+            }
+          } catch (err) {
+            tgApp.showToast(err.message, 'danger');
+          }
+        }
+      }
+
       // Quick Reminder Toggle
       if (e.target.id === 'quick-reminder-btn') {
         e.preventDefault();

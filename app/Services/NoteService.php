@@ -149,6 +149,15 @@ class NoteService
     $this->noteRepository->forceDelete($note);
   }
 
+  public function deleteReminder(int $reminderId, int $telegramUserId): void
+  {
+    $reminder = $this->reminderRepository->findForUser($reminderId, $telegramUserId);
+    if (!$reminder) {
+      throw new ModelNotFoundException('Reminder tidak ditemukan.');
+    }
+    $this->reminderRepository->delete($reminder);
+  }
+
   protected function syncTags(Note $note, array $tagNames): void
   {
     $tagIds = [];

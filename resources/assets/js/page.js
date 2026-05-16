@@ -278,19 +278,69 @@
     },
 
     reminders() {
-      // Hanya tampilkan pengingat yang belum selesai
-      const activeReminders = state.reminders.filter(r => !r.is_completed);
-      return `
-      <h5 class="mb-3">Pengingat</h5>
-      ${activeReminders.length ? activeReminders.map(r => `
+      const allReminders = state.reminders || [];
+      const now = new Date();
+
+      // Fungsi untuk menentukan prioritas pengurutan
+      const getPriority = (r) => {
+        if (r.is_completed) return 3; // selesai -> paling bawah
+        const remindDate = new Date(r.remind_at);
+        if (remindDate > now && !r.notified_at) return 0; // akan datang & belum dinotifikasi -> paling atas
+        if (r.notified_at && !r.is_completed) return 1; // sudah dinotifikasi, belum selesai -> tengah
+        return 2; // lewat waktu tapi belum selesai
+      };
+
+      const sorted = [...allReminders].sort((a, b) => {
+        const pA = getPriority(a);
+        const pB = getPriority(b);
+        if (pA !== pB) return pA - pB;
+        return new Date(a.remind_at) - new Date(b.remind_at);
+      });
+
+      const renderReminderCard = (r) => {
+        const isCompleted = r.is_completed;
+        const isNotified = !!r.notified_at;
+        const isPast = new Date(r.remind_at) < now;
+        const title = helpers.escapeHtml(r.note?.title || 'Tanpa Judul');
+        const dateStr = helpers.formatDate(r.remind_at);
+
+        let statusBadge = '';
+        if (isCompleted) {
+          statusBadge = '<span class="badge bg-success ms-2"><i class="bi bi-check-all"></i> Selesai</span>';
+        } else if (isNotified) {
+          statusBadge = '<span class="badge bg-info ms-2"><i class="bi bi-send-check"></i> Terkirim</span>';
+        } else if (isPast) {
+          statusBadge = '<span class="badge bg-warning ms-2"><i class="bi bi-exclamation-triangle"></i> Terlewat</span>';
+        }
+
+        const completeBtn = !isCompleted ? `
+        <button data-complete-reminder="${r.id}" class="btn btn-sm btn-outline-success me-1"><i class="bi bi-check-lg"></i></button>
+        `: '';
+
+        const deleteBtn = `
+        <button data-delete-reminder="${r.id}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+        `;
+
+        return `
         <div class="d-flex justify-content-between align-items-center glass-card p-2 rounded mb-2">
         <div>
-        <p class="mb-0">${helpers.escapeHtml(r.note?.title || 'Tanpa Judul')}</p>
-        <small class="text-muted">${helpers.formatDate(r.remind_at)}</small>
+        <p class="mb-0">
+        ${title}
+        ${statusBadge}
+        </p>
+        <small class="text-muted">${dateStr}</small>
         </div>
-        <button data-complete-reminder="${r.id}" class="btn btn-sm btn-outline-success"><i class="bi bi-check"></i></button>
+        <div class="d-flex">
+        ${completeBtn}
+        ${deleteBtn}
         </div>
-        `).join(''): `
+        </div>
+        `;
+      };
+
+      return `
+      <h5 class="mb-3">Pengingat</h5>
+      ${sorted.length ? sorted.map(renderReminderCard).join(''): `
       <div class="empty-state">
       <i class="bi bi-bell-slash"></i>
       <p class="mb-2">Tidak ada pengingat.</p>

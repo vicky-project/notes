@@ -44,4 +44,9 @@ class ReminderRepository
   {
     $reminder->update(['notified_at' => Carbon::now(config("app.timezone"))]);
   }
+
+  public function delete(Reminder $reminder): void
+  {
+    $reminder->delete();
+  }
 }

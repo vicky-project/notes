@@ -67,6 +67,11 @@
         method: 'PATCH'
       });
     },
+    async deleteReminder(id) {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes/reminders/${id}`, {
+        method: 'DELETE'
+      });
+    },
     async getProfile() {
       return tgApp.fetchWithAuth(BASE_URL + '/api/notes/profile');
     },
