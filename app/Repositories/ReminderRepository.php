@@ -8,7 +8,7 @@ class ReminderRepository
 {
   public function getUserReminders(int $telegramUserId, bool $upcomingOnly = false) {
     return Reminder::whereHas('note', fn($q) => $q->where('telegram_user_id', $telegramUserId))
-    ->when($upcomingOnly, fn($q) => $q->where('remind_at', '>=', Carbon::now())
+    ->when($upcomingOnly, fn($q) => $q->where('remind_at', '>=', Carbon::now(config("app.timezone")))
       ->where('is_completed', false))
     ->with('note')
     ->orderBy('remind_at')
