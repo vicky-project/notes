@@ -11,7 +11,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
   Route::prefix('notes')->group(function() {
     Route::get('reminders', [ReminderController::class, 'index']);
     Route::patch('reminders/{id}/complete', [ReminderController::class, 'complete']);
-    Route::delete('reminders', [ReminderController::class, 'destroy']);
+    Route::delete('reminders/{id}', [ReminderController::class, 'destroy']);
     Route::get('profile', [ProfileController::class, 'show']);
     Route::get('trashed', [NoteController::class, 'trashed']);
     Route::patch('{id}/restore', [NoteController::class, 'restore']);
