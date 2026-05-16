@@ -25,16 +25,28 @@ class NoteIntegrationController extends Controller
       'reminder_at' => 'nullable|date',
     ]);
 
-    $user = $request->user();
-    $note = $this->integrationService->createNote(
-      telegramUserId: $user->id,
-      payload: $validated
-    );
+    try {
+      $user = $request->user();
+      $note = $this->integrationService->createNote(
+        telegramUserId: $user->id,
+        payload: $validated
+      );
 
-    return response()->json([
-      'success' => true,
-      'message' => 'Catatan berhasil dibuat',
-      'data' => new NoteResource($note),
-    ], 201);
+      return response()->json([
+        'success' => true,
+        'message' => 'Catatan berhasil dibuat',
+        'data' => new NoteResource($note),
+      ], 201);
+    } catch(\Exception $e) {
+      \Log::error("Failed save to notes", [
+        'message' => $e->getMessage(),
+        'trace' => $e->getTrace()
+      ]);
+
+      return response()->json([
+        'success' => false,
+        'message' => $e->getMessage()
+      ], 500);
+    }
   }
 }
