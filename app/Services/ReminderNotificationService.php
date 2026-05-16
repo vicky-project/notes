@@ -17,11 +17,6 @@ class ReminderNotificationService
   {
     $dueReminders = $this->reminderRepository->getDueReminders();
 
-    Log::info('[Reminder] Memulai pengiriman notifikasi.', [
-      'total_due' => count($dueReminders),
-      'time' => now()->toDateTimeString(),
-    ]);
-
     if (empty($dueReminders)) {
       Log::info('[Reminder] Tidak ada pengingat yang jatuh tempo.');
       return;
@@ -64,42 +59,14 @@ class ReminderNotificationService
 
       $message .= "\n⏱ " . $reminder->remind_at->translatedFormat('d M Y, H:i');
 
-      $replyMarkup = [
-        'inline_keyboard' => [
-          [
-            [
-              'text' => '✅ Selesaikan',
-              'callback_data' => "reminder_complete_{$reminder->id}"
-            ]
-          ],
-          [
-            [
-              'text' => '📖 Buka Notes',
-              'url' => config('app.url') . '/notes'
-            ]
-          ]
-        ]
-      ];
-
-      Log::info('[Reminder] Mengirim pesan ke chat.', [
-        'chat_id' => $chatId,
-        'reminder_id' => $reminder->id,
-        'note_title' => $noteTitle,
-      ]);
-
       $result = $this->telegramApi->sendMessage(
         chatId: $chatId,
         text: $message,
-        parseMode: 'Markdown',
-        replyMarkup: $replyMarkup
+        parseMode: 'MarkdownV2',
       );
 
       if ($result) {
         $this->reminderRepository->markNotified($reminder);
-        Log::info('[Reminder] Notifikasi berhasil dikirim.', [
-          'chat_id' => $chatId,
-          'reminder_id' => $reminder->id,
-        ]);
       } else {
         Log::error('[Reminder] Gagal mengirim notifikasi.', [
           'chat_id' => $chatId,
