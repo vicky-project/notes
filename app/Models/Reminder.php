@@ -15,9 +15,9 @@ class Reminder extends Model
   ];
 
   protected $casts = [
-    'remind_at' => 'datetime:Y-m-d\TH:i:s\Z',
+    'remind_at' => 'datetime',
     'is_completed' => 'boolean',
-    'notified_at' => 'datetime:Y-m-d\TH:i:s\Z',
+    'notified_at' => 'datetime',
   ];
 
   public function note() {
