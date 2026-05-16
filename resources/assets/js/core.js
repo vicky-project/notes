@@ -105,6 +105,15 @@
         day: 'numeric', month: 'short', year: 'numeric'
       });
     },
+    formatDateTime(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      }) + ', ' +
+      date.toLocaleTimeString('id-ID', {
+        hour: '2-digit', minute: '2-digit'
+      });
+    },
     escapeHtml(str) {
       return tgApp.escapeHtml(str);
     },

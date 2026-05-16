@@ -69,7 +69,10 @@
       <h6 class="text-uppercase text-muted small mb-2">⏰ Hari Ini</h6>
       ${todayReminders.length ? todayReminders.map(r => `
         <div class="d-flex justify-content-between align-items-center glass-card p-2 rounded mb-2">
+        <div>
         <span>${helpers.escapeHtml(r.note?.title || 'Tanpa Judul')}</span>
+        <small class="d-block text-muted">${helpers.formatDateTime(r.remind_at)}</small>
+        </div>
         <button data-complete-reminder="${r.id}" class="btn btn-sm btn-outline-success"><i class="bi bi-check"></i></button>
         </div>
         `).join(''): '<p class="text-muted small">Tidak ada pengingat hari ini.</p>'}
@@ -180,7 +183,7 @@
       <div class="mt-3 pt-3 border-top border-secondary">
       <div class="d-flex align-items-center gap-2">
       <i class="bi bi-bell"></i>
-      <small>Pengingat: ${note.reminder ? helpers.formatDate(note.reminder.remind_at): 'Belum diatur'}</small>
+      <small>Pengingat: ${note.reminder ? helpers.formatDateTime(note.reminder.remind_at): 'Belum diatur'}</small>
       <button id="quick-reminder-btn" class="btn btn-sm btn-outline-light ms-auto">${note.reminder ? 'Ubah': 'Tambah'}</button>
       </div>
       <div id="quick-reminder-form" class="mt-2" style="display:none;">
@@ -302,7 +305,7 @@
         const isNotified = !!r.notified_at;
         const isPast = new Date(r.remind_at) < now;
         const title = helpers.escapeHtml(r.note?.title || 'Tanpa Judul');
-        const dateStr = helpers.formatDate(r.remind_at);
+        const dateStr = helpers.formatDateTime(r.remind_at);
 
         let statusBadge = '';
         if (isCompleted) {
