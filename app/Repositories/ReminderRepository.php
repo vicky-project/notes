@@ -33,9 +33,9 @@ class ReminderRepository
   public function getDueReminders(): array
   {
     return Reminder::where('remind_at', '<=', Carbon::now())
+    ->with(['note.user']) // pastikan relasi note -> user
     ->where('is_completed', false)
     ->whereNull('notified_at')
-    ->with(['note.user']) // pastikan relasi note -> user
     ->get()
     ->all();
   }

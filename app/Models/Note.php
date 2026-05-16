@@ -26,7 +26,7 @@ class Note extends Model
   ];
 
   public function user() {
-    return $this->belongsTo(TelegramUser::class);
+    return $this->belongsTo(TelegramUser::class, 'telegram_user_id');
   }
 
   public function tags() {
