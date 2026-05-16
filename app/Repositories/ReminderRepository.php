@@ -8,7 +8,7 @@ class ReminderRepository
 {
   public function getUserReminders(int $telegramUserId, bool $upcomingOnly = false) {
     return Reminder::whereHas('note', fn($q) => $q->where('telegram_user_id', $telegramUserId))
-    ->when($upcomingOnly, fn($q) => $q->where('remind_at', '>=', Carbon::now(config("app.timezone")))
+    ->when($upcomingOnly, fn($q) => $q->where('remind_at', '>=', Carbon::now())
       ->where('is_completed', false))
     ->with('note')
     ->orderBy('remind_at')
@@ -32,7 +32,7 @@ class ReminderRepository
   */
   public function getDueReminders(): array
   {
-    return Reminder::where('remind_at', '<=', Carbon::now(config("app.timezone")))
+    return Reminder::where('remind_at', '<=', Carbon::now())
     ->where('is_completed', false)
     ->whereNull('notified_at')
     ->with('note.user') // pastikan relasi note -> user
@@ -42,7 +42,7 @@ class ReminderRepository
 
   public function markNotified(Reminder $reminder): void
   {
-    $reminder->update(['notified_at' => Carbon::now(config("app.timezone"))]);
+    $reminder->update(['notified_at' => Carbon::now()]);
   }
 
   public function delete(Reminder $reminder): void
