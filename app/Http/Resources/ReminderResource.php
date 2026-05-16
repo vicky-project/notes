@@ -9,7 +9,7 @@ class ReminderResource extends JsonResource
   {
     return [
       'id' => $this->id,
-      'remind_at' => $this->remind_at->toIso8601String(),
+      'remind_at' => $this->remind_at,
       'is_completed' => $this->is_completed,
       'note' => new NoteResource($this->whenLoaded('note')),
     ];
