@@ -28,7 +28,7 @@ class ReminderNotificationService
     }
 
     foreach ($dueReminders as $reminder) {
-      $telegramUser = $reminder->note->telegramUser ?? null;
+      $telegramUser = $reminder->note->user ?? null;
 
       if (!$telegramUser) {
         Log::warning('[Reminder] TelegramUser tidak ditemukan.', [
