@@ -34,6 +34,8 @@ class ReminderNotificationService
         Log::warning('[Reminder] TelegramUser tidak ditemukan.', [
           'note_id' => $reminder->note_id,
           'reminder_id' => $reminder->id,
+          'user' => $telegramUser,
+          'note' => $reminder->note
         ]);
         continue;
       }
