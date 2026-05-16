@@ -114,6 +114,18 @@
         hour: '2-digit', minute: '2-digit'
       });
     },
+    toLocalInputValue(utcString) {
+      if (!utcString) return '';
+      const date = new Date(utcString);
+      // Konversi ke waktu lokal untuk input datetime-local
+      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return local.toISOString().slice(0, 16);
+    },
+    toUTCDateTime(localValue) {
+      if (!localValue) return null;
+      // Input datetime-local dianggap waktu lokal, konversi ke UTC
+      return new Date(localValue).toISOString();
+    },
     escapeHtml(str) {
       return tgApp.escapeHtml(str);
     },

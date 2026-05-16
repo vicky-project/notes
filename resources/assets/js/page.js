@@ -187,7 +187,7 @@
       <button id="quick-reminder-btn" class="btn btn-sm btn-outline-light ms-auto">${note.reminder ? 'Ubah': 'Tambah'}</button>
       </div>
       <div id="quick-reminder-form" class="mt-2" style="display:none;">
-      <input type="datetime-local" id="quick-reminder-input" class="form-control glass-input mb-2" value="${note.reminder?.remind_at ? new Date(note.reminder.remind_at).toISOString().slice(0, 16): ''}">
+      <input type="datetime-local" id="quick-reminder-input" class="form-control glass-input mb-2" value="${helpers.toLocalInputValue(note.reminder?.remind_at)}">
       <button id="quick-reminder-save" class="btn btn-sm btn-warning">Simpan</button>
       <button id="quick-reminder-cancel" class="btn btn-sm btn-outline-secondary">Batal</button>
       </div>
@@ -272,7 +272,7 @@
 
       <div class="mb-3">
       <label class="form-label">Pengingat</label>
-      <input type="datetime-local" name="reminder_at" value="${reminderValue}" class="form-control glass-input">
+      <input type="datetime-local" name="reminder_at" value="${helpers.toLocalInputValue(reminderAt)}" class="form-control glass-input">
       </div>
 
       <button type="submit" class="btn btn-warning w-100">${isEdit ? 'Update': 'Simpan'}</button>

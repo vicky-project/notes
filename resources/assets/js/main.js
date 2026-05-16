@@ -396,7 +396,7 @@
         const input = document.getElementById('quick-reminder-input');
         const note = state.currentNote;
         if (!input || !note) return;
-        const reminderAt = input.value;
+        const reminderAt = helpers.toUTCDateTime(input.value);
         if (!reminderAt) {
           tgApp.showToast('Pilih tanggal dan waktu', 'warning');
           return;
@@ -640,7 +640,7 @@
             type: type,
             content: contentValue,
             tags: tagsArray,
-            reminder_at: form.querySelector('input[name="reminder_at"]').value || null
+            reminder_at: helpers.toUTCDateTime(form.querySelector('input[name="reminder_at"]').value)
           };
 
           try {
