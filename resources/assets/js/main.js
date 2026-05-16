@@ -351,6 +351,7 @@
         const id = completeBtn.dataset.completeReminder;
         try {
           await api.completeReminder(id);
+          state.setState('reminders', state.reminders.filter(r => r.id != id));
           tgApp.showToast('Pengingat selesai', 'success');
           navigateTo(window.location.hash);
         } catch(err) {

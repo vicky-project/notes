@@ -273,9 +273,11 @@
     },
 
     reminders() {
+      // Hanya tampilkan pengingat yang belum selesai
+      const activeReminders = state.reminders.filter(r => !r.is_completed);
       return `
       <h5 class="mb-3">Pengingat</h5>
-      ${state.reminders.length ? state.reminders.map(r => `
+      ${activeReminders.length ? activeReminders.map(r => `
         <div class="d-flex justify-content-between align-items-center glass-card p-2 rounded mb-2">
         <div>
         <p class="mb-0">${helpers.escapeHtml(r.note?.title || 'Tanpa Judul')}</p>
