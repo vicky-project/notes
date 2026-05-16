@@ -35,7 +35,8 @@ class ReminderNotificationService
           'note_id' => $reminder->note_id,
           'reminder_id' => $reminder->id,
           'user' => $telegramUser,
-          'note' => $reminder->note
+          'note' => $reminder->note,
+          'reminder' => $reminder
         ]);
         continue;
       }
