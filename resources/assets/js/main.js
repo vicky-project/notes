@@ -358,6 +358,58 @@
           tgApp.showToast(err.message, 'danger');
         }
       }
+
+      // Quick Reminder Toggle
+      if (e.target.id === 'quick-reminder-btn') {
+        e.preventDefault();
+        const form = document.getElementById('quick-reminder-form');
+        if (form) form.style.display = form.style.display === 'none' ? 'block': 'none';
+      }
+      // Cancel
+      if (e.target.id === 'quick-reminder-cancel') {
+        e.preventDefault();
+        const form = document.getElementById('quick-reminder-form');
+        if (form) form.style.display = 'none';
+      }
+      // Save
+      if (e.target.id === 'quick-reminder-save') {
+        e.preventDefault();
+        const input = document.getElementById('quick-reminder-input');
+        const note = state.currentNote;
+        if (!input || !note) return;
+        const reminderAt = input.value;
+        if (!reminderAt) {
+          tgApp.showToast('Pilih tanggal dan waktu', 'warning');
+          return;
+        }
+        tgApp.showLoading('Menyimpan pengingat...');
+        try {
+          await api.updateNote(note.id, {
+            reminder_at: reminderAt
+          });
+          const updatedNote = {
+            ...note,
+            reminder: {
+              ...note.reminder,
+              remind_at: reminderAt
+            }
+          };
+          state.setState('currentNote', updatedNote);
+          const updatedNotes = state.notes.map(n => n.id === note.id ? {
+            ...n, reminder: {
+              ...n.reminder, remind_at: reminderAt
+            }
+          }: n);
+          state.setState('notes', updatedNotes);
+          tgApp.showToast('Pengingat disimpan', 'success');
+          document.getElementById('quick-reminder-form').style.display = 'none';
+          document.getElementById('app-content').innerHTML = Page.noteDetail();
+        } catch (err) {
+          tgApp.showToast(err.message, 'danger');
+        } finally {
+          tgApp.hideLoading();
+        }
+      }
       const removeBtn = e.target.closest('[data-remove-tag]');
       if (removeBtn) {
         e.preventDefault();
@@ -423,6 +475,7 @@
           tgApp.showToast('Data checklist rusak', 'danger');
         }
       }
+
       const restoreBtn = e.target.closest('[data-restore-note]');
       if (restoreBtn) {
         e.preventDefault();

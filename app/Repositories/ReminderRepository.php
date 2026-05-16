@@ -32,7 +32,7 @@ class ReminderRepository
   */
   public function getDueReminders(): array
   {
-    return Reminder::where('remind_at', '<=', Carbon::now())
+    return Reminder::where('remind_at', '<=', Carbon::now(config("app.timezone")))
     ->where('is_completed', false)
     ->whereNull('notified_at')
     ->with('note.user') // pastikan relasi note -> user
@@ -42,6 +42,6 @@ class ReminderRepository
 
   public function markNotified(Reminder $reminder): void
   {
-    $reminder->update(['notified_at' => Carbon::now()]);
+    $reminder->update(['notified_at' => Carbon::now(config("app.timezone"))]);
   }
 }

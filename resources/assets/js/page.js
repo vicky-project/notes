@@ -130,15 +130,7 @@
       if (!note) return `<div class="empty-state">Catatan tidak ditemukan.</div>`;
 
       let contentHtml = '';
-      if (note.type === 'image') {
-        contentHtml = `<img src="${helpers.escapeHtml(note.content)}" class="img-fluid rounded" alt="${helpers.escapeHtml(note.title)}" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23333%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%2210%22>Gagal memuat</text></svg>';">`;
-      } else if (note.type === 'voice') {
-        contentHtml = `
-        <audio controls class="w-100">
-        <source src="${helpers.escapeHtml(note.content)}" type="audio/mpeg">
-        Browser Anda tidak mendukung pemutar audio.
-        </audio>`;
-      } else if (note.type === 'checklist') {
+      if (note.type === 'checklist') {
         try {
           const items = JSON.parse(note.content);
           if (Array.isArray(items)) {
@@ -150,7 +142,7 @@
               return `
               <div class="d-flex align-items-center mb-2 checklist-item-row" data-index="${index}">
               <i class="bi ${done ? 'bi-check-square-fill text-success': 'bi-square'} me-2 checklist-toggle" style="cursor:pointer; font-size: 1.2rem;"></i>
-              <span class="${done ? 'text-decoration-line-through text-muted': ''}">${helpers.escapeHtml(text)}</span>
+              <span class="${done ? 'text-decoration-line-through text-muted': ''} checklist-toggle">${helpers.escapeHtml(text)}</span>
               </div>
               `;
             }).join('')}
@@ -160,29 +152,42 @@
         } catch (e) {
           contentHtml = `<p>${helpers.escapeHtml(note.content)}</p>`;
         }
+      } else if (note.type === 'image') {
+        contentHtml = `<img src="${helpers.escapeHtml(note.content)}" class="img-fluid rounded" alt="${helpers.escapeHtml(note.title)}">`;
+      } else if (note.type === 'voice') {
+        contentHtml = `<audio controls class="w-100"><source src="${helpers.escapeHtml(note.content)}" type="audio/mpeg"></audio>`;
       } else {
         contentHtml = note.content || '';
       }
-
-      const summarizeBtn = state.aiEnabled && note.type === 'text' && note.content?.length > 100 ? `
-      <button id="summarize-btn" class="btn btn-outline-warning btn-sm"><i class="bi bi-stars me-1"></i> Ringkas AI</button>
-      `: '';
 
       return `
       <div class="card glass-card text-white border-0">
       <div class="card-body">
       <h5 class="card-title">${helpers.escapeHtml(note.title)}</h5>
       <div class="card-text">${contentHtml}</div>
-      <div id="ai-summary" class="mt-3"></div>
       ${note.tags?.length ? `
       <div class="d-flex flex-wrap gap-1 mt-3">
       ${note.tags.map(tag => `<span class="badge bg-secondary">${helpers.escapeHtml(tag.name)}</span>`).join('')}
       </div>
       `: ''}
+      <div id="ai-summary" class="mt-3"></div>
       <div class="d-flex gap-2 mt-3">
       <a href="#/notes/${note.id}/edit" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> Edit</a>
       <button data-delete-note="${note.id}" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> Hapus</button>
-      ${summarizeBtn}
+      ${state.aiEnabled && note.content?.length > 100 ? `<button id="summarize-btn" class="btn btn-outline-warning btn-sm"><i class="bi bi-stars me-1"></i> Ringkas AI</button>`: ''}
+      </div>
+      <!-- Quick Reminder -->
+      <div class="mt-3 pt-3 border-top border-secondary">
+      <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-bell"></i>
+      <small>Pengingat: ${note.reminder ? helpers.formatDate(note.reminder.remind_at): 'Belum diatur'}</small>
+      <button id="quick-reminder-btn" class="btn btn-sm btn-outline-light ms-auto">${note.reminder ? 'Ubah': 'Tambah'}</button>
+      </div>
+      <div id="quick-reminder-form" class="mt-2" style="display:none;">
+      <input type="datetime-local" id="quick-reminder-input" class="form-control glass-input mb-2" value="${note.reminder?.remind_at ? new Date(note.reminder.remind_at).toISOString().slice(0, 16): ''}">
+      <button id="quick-reminder-save" class="btn btn-sm btn-warning">Simpan</button>
+      <button id="quick-reminder-cancel" class="btn btn-sm btn-outline-secondary">Batal</button>
+      </div>
       </div>
       </div>
       </div>
