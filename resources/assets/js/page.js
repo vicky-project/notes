@@ -205,7 +205,6 @@
       const reminderValue = reminderAt ? new Date(reminderAt).toISOString().slice(0, 16): '';
       const type = note.type || 'text';
 
-      // Ambil parameter date dari hash untuk mode create
       let defaultDate = '';
       if (mode === 'create') {
         const hash = window.location.hash;
