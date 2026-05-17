@@ -699,12 +699,17 @@ function setupGlobalEvents() {
         if (!title) return;
         const currentDate = new URLSearchParams(window.location.hash.split('?')[1] || '').get('date') || helpers.getToday();
         try {
-          await api.createNote({
+          const newNote = await api.createNote({
             title, note_date: currentDate
           });
+          const noteData = extractData(newNote);
+          // Tambahkan ke state.notes
+          state.setState('notes', [noteData, ...state.notes]);
           form.reset();
           tgApp.showToast('Catatan harian tersimpan', 'success');
-          navigateTo(`#/notes/daily?date=${currentDate}`);
+          // Render ulang halaman daily dengan data terbaru
+          const content = document.getElementById('app-content');
+          content.innerHTML = Page.daily(currentDate);
         } catch (err) {
           tgApp.showToast(err.message, 'danger');
         }
