@@ -15,6 +15,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('reminders/{id}', [ReminderController::class, 'destroy']);
     Route::get('tags', [TagController::class, 'index']);
     Route::get('profile', [ProfileController::class, 'show']);
+    Route::get('dates-with-notes', [NoteController::class, 'datesWithNotes']);
     Route::get('trashed', [NoteController::class, 'trashed']);
     Route::patch('{id}/restore', [NoteController::class, 'restore']);
     Route::delete('{id}/force', [NoteController::class, 'forceDelete']);

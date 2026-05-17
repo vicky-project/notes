@@ -26,6 +26,17 @@ class NoteRepository
     ->paginate($filters['per_page'] ?? 15);
   }
 
+  public function getUserNoteDates(int $telegramUserId): array
+  {
+    return Note::where('telegram_user_id', $telegramUserId)
+    ->whereNotNull('note_date')
+    ->distinct()
+    ->pluck('note_date')
+    ->map(fn($d) => $d->format('Y-m-d'))
+    ->values()
+    ->all();
+  }
+
   public function findForUser(int $id, int $telegramUserId): ?Note
   {
     return Note::with(['tags', 'reminder'])->where('id', $id)->where('telegram_user_id', $telegramUserId)->first();

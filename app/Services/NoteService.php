@@ -30,6 +30,10 @@ class NoteService
     return $note;
   }
 
+  public function getNoteDates(int $telegramUserId) {
+    return $this->noteRepository->getUserNoteDates($telegramUserId);
+  }
+
   public function createNote(int $telegramUserId, array $data): Note
   {
     $data['telegram_user_id'] = $telegramUserId;

@@ -216,5 +216,21 @@
     .ql-snow.ql-toolbar button.ql-active .ql-fill {
     fill: var(--tg-theme-button-color, #ffc107);
     }
+    /* Titik kecil di bawah tanggal yang memiliki catatan */
+    .vc-date__btn.has-notes::after {
+    content: '';
+    display: block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #ffc107;  /* warna kuning/emas */
+    margin: 2px auto 0;
+    }
+
+    /* Atau Anda bisa memberi latar belakang samar */
+    .vc-date__btn.has-notes {
+    background: rgba(255, 193, 7, 0.2);
+    border-radius: 50%;
+    }
     </style>
     @endpush

@@ -98,4 +98,10 @@ class NoteController extends Controller
     $this->noteService->forceDeleteNote($id, $user->id);
     return response()->json(['message' => 'Catatan dihapus permanen']);
   }
+
+  public function datesWithNotes(Request $request) {
+    $dates = $this->noteService->getNoteDates($request->user()->id);
+
+    return response()->json($dates);
+  }
 }

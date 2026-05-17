@@ -228,8 +228,25 @@
     if (!container || !window.VanillaCalendarPro) return;
 
     if (calendar) {
-      calendar.destroy(); calendar = null;
+      calendar.destroy();
+      calendar = null;
     }
+
+    let datesWithNotes = [];
+    try {
+      datesWithNotes = await tgApp.fetchWithAuth(BASE_URL + '/api/notes/dates-with-notes');
+    } catch (err) {
+      // jika gagal, kalender tetap tampil tanpa penanda
+    }
+
+    // Susun objek popups
+    const popups = {};
+    (datesWithNotes || []).forEach(date => {
+      popups[date] = {
+        modifier: 'has-notes', // class CSS untuk penanda visual
+        html: '<div>Ada catatan</div>' // opsional, bisa diisi jumlah catatan
+      };
+    });
 
     const selectedDate = state.activeDate || helpers.getToday();
     const {
@@ -238,7 +255,7 @@
     calendar = new Calendar(container, {
       type: 'default',
       selectedDate: selectedDate,
-      firstDayOfWeek: 1,
+      firstDayOfWeek: 0,
       locale: 'id-ID',
       settings: {
         visibility: {
@@ -247,6 +264,7 @@
           day: 'single'
         }
       },
+      popups: popups,
       onClickDate(self, event) {
         const btn = event.target.closest('[data-vc-date-btn]');
         if (btn) {
