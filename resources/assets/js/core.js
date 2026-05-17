@@ -131,6 +131,15 @@
       // Input datetime-local dianggap waktu lokal, konversi ke UTC
       return new Date(localValue).toISOString();
     },
+    formatDateYMD(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`; // YYYY-MM-DD
+    },
+    getToday() {
+      return this.formatDateYMD(new Date());
+    },
     escapeHtml(str) {
       return tgApp.escapeHtml(str);
     },
