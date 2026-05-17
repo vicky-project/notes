@@ -51,10 +51,7 @@ class NoteController extends Controller
         'trace' => $e->getTrace()
       ]);
 
-      return response()->json([
-        'success' => false,
-        'message' => $e->getMessage(),
-      ], 500);
+      return new NoteResource([]);
     }
   }
 
