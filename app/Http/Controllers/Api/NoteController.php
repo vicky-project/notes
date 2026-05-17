@@ -42,8 +42,12 @@ class NoteController extends Controller
   public function show(Request $request, $id): NoteResource
   {
     $user = $request->user();
-    $note = $this->noteService->getNote((int) $id, $user->id); // kita tambahkan method
-    return new NoteResource($note);
+    try {
+      $note = $this->noteService->getNote((int) $id, $user->id);
+      return new NoteResource($note);
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+      abort(404, 'Catatan tidak ditemukan.');
+    }
   }
 
   public function update(UpdateNoteRequest $request, $id): NoteResource
