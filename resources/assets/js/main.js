@@ -189,12 +189,10 @@
     if (!container || !window.VanillaCalendarPro) return;
 
     if (calendar) {
-      calendar.destroy();
-      calendar = null;
+      calendar.destroy(); calendar = null;
     }
 
     const selectedDate = state.activeDate || helpers.getToday();
-
     const {
       Calendar
     } = window.VanillaCalendarPro;
@@ -205,21 +203,17 @@
       locale: 'id-ID',
       settings: {
         visibility: {
-          daysOutsideMonth: true,
-        },
-        selection: {
-          day: 'single',
-        },
+          daysOutsideMonth: true
+        }, selection: {
+          day: 'single'
+        }
       },
       onClickDate(self, event) {
         const btn = event.target.closest('[data-vc-date-btn]');
         if (btn) {
           const dateDiv = btn.closest('[data-vc-date]');
-          if (dateDiv) {
-            const date = dateDiv.dataset.vcDate;
-            if (date) {
-              navigateTo(`#/notes/daily?date=${date}`);
-            }
+          if (dateDiv && dateDiv.dataset.vcDate) {
+            navigateTo(`#/notes/daily?date=${dateDiv.dataset.vcDate}`);
           }
         }
       },
@@ -233,7 +227,6 @@
         dayBtnToday: 'border-warning',
       }
   });
-
   calendar.init();
 }
 
@@ -333,8 +326,7 @@ async function navigateTo(hash) {
       } else {
         destroyQuill();
         if (calendar) {
-          calendar.destroy();
-          calendar = null;
+          calendar.destroy(); calendar = null;
         }
       }
     },
@@ -408,8 +400,13 @@ function setupGlobalEvents() {
       if (confirm('Hapus catatan ini?')) {
         try {
           await api.deleteNote(id);
+          state.setState('notes', state.notes.filter(n => n.id != id));
           tgApp.showToast('Catatan dihapus', 'success');
-          window.location.hash = '#/notes/all';
+          if (state.activeRoute === '/notes/daily') {
+            document.getElementById('app-content').innerHTML = Page.daily(state.activeDate);
+          } else {
+            window.location.hash = '#/notes/all';
+          }
         } catch(err) {
           tgApp.showToast(err.message, 'danger');
         }
@@ -464,13 +461,11 @@ function setupGlobalEvents() {
       const formEl = document.getElementById('quick-reminder-form');
       if (formEl) formEl.style.display = formEl.style.display === 'none' ? 'block': 'none';
     }
-    // Cancel
     if (e.target.id === 'quick-reminder-cancel') {
       e.preventDefault();
       const formEl = document.getElementById('quick-reminder-form');
       if (formEl) formEl.style.display = 'none';
     }
-    // Save
     if (e.target.id === 'quick-reminder-save') {
       e.preventDefault();
       const input = document.getElementById('quick-reminder-input');
@@ -512,8 +507,7 @@ function setupGlobalEvents() {
 
     const removeBtn = e.target.closest('[data-remove-tag]');
     if (removeBtn) {
-      e.preventDefault();
-      removeTag(removeBtn.dataset.removeTag);
+      e.preventDefault(); removeTag(removeBtn.dataset.removeTag);
     }
     if (e.target.id === 'add-checklist-btn') {
       e.preventDefault();
@@ -655,8 +649,7 @@ function setupGlobalEvents() {
           }
           btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Teringkas';
           setTimeout(() => {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
+            btn.disabled = false; btn.innerHTML = originalHtml;
           }, 3000);
         } catch (err) {
           tgApp.showToast('Gagal merangkum: ' + err.message, 'danger');
@@ -703,13 +696,10 @@ function setupGlobalEvents() {
             title, note_date: currentDate
           });
           const noteData = extractData(newNote);
-          // Tambahkan ke state.notes
           state.setState('notes', [noteData, ...state.notes]);
           form.reset();
           tgApp.showToast('Catatan harian tersimpan', 'success');
-          // Render ulang halaman daily dengan data terbaru
-          const content = document.getElementById('app-content');
-          content.innerHTML = Page.daily(currentDate);
+          document.getElementById('app-content').innerHTML = Page.daily(currentDate);
         } catch (err) {
           tgApp.showToast(err.message, 'danger');
         }
@@ -736,13 +726,14 @@ function setupGlobalEvents() {
         }
 
         const tagsArray = getTagsFromHidden();
+        const noteDate = form.querySelector('input[name="note_date"]')?.value || null;
         const data = {
           title: form.querySelector('input[name="title"]').value.trim(),
           type: type,
           content: contentValue,
           tags: tagsArray,
           reminder_at: helpers.toUTCDateTime(form.querySelector('input[name="reminder_at"]').value),
-          note_date: form.querySelector('input[name="note_date"]')?.value || null
+          note_date: noteDate
         };
 
         try {
@@ -753,7 +744,12 @@ function setupGlobalEvents() {
             await api.createNote(data);
             tgApp.showToast('Catatan dibuat', 'success');
           }
-          window.location.hash = '#/notes/all';
+          // Jika ada note_date, kembali ke halaman daily pada tanggal tersebut
+          if (noteDate) {
+            window.location.hash = `#/notes/daily?date=${noteDate}`;
+          } else {
+            window.location.hash = '#/notes/all';
+          }
         } catch(err) {
           tgApp.showToast(err.message, 'danger');
           submitBtn.disabled = false;
