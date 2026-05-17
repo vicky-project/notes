@@ -216,15 +216,27 @@
     .ql-snow.ql-toolbar button.ql-active .ql-fill {
     fill: var(--tg-theme-button-color, #ffc107);
     }
-    /* Titik kecil di bawah tanggal yang memiliki catatan */
+    /* Pastikan tombol tanggal bisa menjadi acuan posisi untuk titik */
+    .vc-date__btn {
+    position: relative;
+    }
+
+    /* Titik kecil di bawah angka, rata tengah secara horizontal */
     .vc-date__btn.has-notes::after {
     content: '';
-    display: block;
+    position: absolute;
+    /* Tempatkan di tengah horizontal, dan sedikit di bawah teks */
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: #ffc107;  /* warna kuning/emas */
-    margin: 2px auto 0;
+    background-color: #ffc107; /* warna kuning/emas */
+    /* Pastikan tidak mengganggu klik */
+    pointer-events: none;
+    /* Animasi halus saat muncul */
+    transition: opacity 0.2s;
     }
     </style>
     @endpush
