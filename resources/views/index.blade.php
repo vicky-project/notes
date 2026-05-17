@@ -50,6 +50,7 @@
 
 @push('scripts')
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/index.js" defer></script>
 <script src="//cdn.jsdelivr.net/npm/eruda"></script>
 <script>
   eruda.init();
@@ -66,6 +67,7 @@
 @endpush
 
 @push('styles')
+<link href="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/styles/index.css" rel="stylesheet">
 <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 <style>
   body {

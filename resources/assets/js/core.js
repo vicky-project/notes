@@ -131,37 +131,6 @@
       // Input datetime-local dianggap waktu lokal, konversi ke UTC
       return new Date(localValue).toISOString();
     },
-    formatDateYMD(date) {
-      return date.toISOString().slice(0, 10); // YYYY-MM-DD
-    },
-    getToday() {
-      return this.formatDateYMD(new Date());
-    },
-    getCalendarDays(year, month) {
-      // month 0-based (Jan = 0)
-      const firstDayOfMonth = new Date(year, month, 1);
-      const lastDayOfMonth = new Date(year, month + 1, 0);
-
-      // Hari pertama dalam minggu (0 = Minggu, 1 = Senin, ..., 6 = Sabtu)
-      let startDayOfWeek = firstDayOfMonth.getDay(); // 0 = Minggu
-      // Kita ingin mulai dari Senin. Jika Minggu, mundur 6 hari. Jika bukan, mundur (startDayOfWeek - 1) hari.
-      const daysFromMonday = startDayOfWeek === 0 ? 6: startDayOfWeek - 1;
-      const startDate = new Date(firstDayOfMonth);
-      startDate.setDate(1 - daysFromMonday);
-
-      const lastDayOfWeek = lastDayOfMonth.getDay();
-      const daysToSunday = lastDayOfWeek === 0 ? 0: 7 - lastDayOfWeek;
-      const endDate = new Date(lastDayOfMonth);
-      endDate.setDate(lastDayOfMonth.getDate() + daysToSunday);
-
-      const days = [];
-      let current = new Date(startDate);
-      while (current <= endDate) {
-        days.push(new Date(current));
-        current.setDate(current.getDate() + 1);
-      }
-      return days;
-    },
     escapeHtml(str) {
       return tgApp.escapeHtml(str);
     },

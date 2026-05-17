@@ -369,51 +369,18 @@
     daily(dateStr = null) {
       const today = dateStr || helpers.getToday();
       const selectedDate = new Date(today);
-      const year = selectedDate.getFullYear();
-      const month = selectedDate.getMonth(); // 0-based
-      const days = helpers.getCalendarDays(year, month);
 
       const notesForSelected = state.notes.filter(n => n.note_date === today);
 
-      // Header hari (Senin - Minggu)
-      const dayNames = ['Sen',
-        'Sel',
-        'Rab',
-        'Kam',
-        'Jum',
-        'Sab',
-        'Min'];
-
-      let calendarHtml = `
-      <div class="d-flex justify-content-between align-items-center mb-3">
-      <button id="prev-month" class="btn btn-sm btn-outline-light">&lt;</button>
-      <h6 class="mb-0">${selectedDate.toLocaleDateString('id-ID', {
-        month: 'long', year: 'numeric'
-      })}</h6>
-      <button id="next-month" class="btn btn-sm btn-outline-light">&gt;</button>
+      return `
+      <div id="daily-view">
+      <div id="daily-calendar" style="max-width: 100%; margin-bottom: 1rem;"></div>
+      <div class="mt-3">
+      <form id="daily-quick-capture" class="input-group">
+      <input type="text" name="title" class="form-control glass-input" placeholder="Tambah catatan untuk hari ini...">
+      <button type="submit" class="btn btn-warning"><i class="bi bi-plus-lg"></i></button>
+      </form>
       </div>
-      <div class="row row-cols-7 text-center mb-2">
-      ${dayNames.map(d => `<div class="col text-muted small fw-bold">${d}</div>`).join('')}
-      </div>
-      <div class="row row-cols-7 text-center" id="calendar-grid">
-      ${days.map(d => {
-        const dateStr = helpers.formatDateYMD(d);
-        const isCurrentMonth = d.getMonth() === month;
-        const isSelected = dateStr === today;
-        return `
-        <div class="col mb-2">
-        <button class="btn btn-sm w-100 ${isSelected ? 'btn-warning': (isCurrentMonth ? 'btn-outline-light': 'btn-outline-secondary')} calendar-day-btn"
-        data-date="${dateStr}"
-        ${!isCurrentMonth ? 'style="opacity:0.4;"': ''}>
-        ${d.getDate()}
-        </button>
-        </div>
-        `;
-      }).join('')}
-      </div>
-      `;
-
-      let notesHtml = `
       <div class="mt-4">
       <h6>${helpers.escapeHtml(selectedDate.toLocaleDateString('id-ID', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
@@ -430,22 +397,6 @@
         `).join(''): `<p class="text-muted">Belum ada catatan untuk hari ini.</p>`}
       </div>
       </div>
-      `;
-
-      let quickAddHtml = `
-      <div class="mt-3">
-      <form id="daily-quick-capture" class="input-group">
-      <input type="text" name="title" class="form-control glass-input" placeholder="Tambah catatan untuk hari ini...">
-      <button type="submit" class="btn btn-warning"><i class="bi bi-plus-lg"></i></button>
-      </form>
-      </div>
-      `;
-
-      return `
-      <div id="daily-view">
-      ${calendarHtml}
-      ${quickAddHtml}
-      ${notesHtml}
       </div>
       `;
     },
