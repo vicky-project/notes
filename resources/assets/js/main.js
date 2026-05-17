@@ -195,7 +195,11 @@
 
     const selectedDate = state.activeDate || helpers.getToday();
 
-    calendar = new VanillaCalendarPro(container, {
+    // Destructure the Calendar constructor
+    const {
+      Calendar
+    } = window.VanillaCalendarPro;
+    calendar = new Calendar(container, {
       type: 'default',
       selectedDate: selectedDate,
       firstDayOfWeek: 1,
