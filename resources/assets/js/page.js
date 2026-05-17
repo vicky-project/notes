@@ -411,10 +411,10 @@
       return `
       <div id="daily-view">
       <div id="daily-calendar" style="max-width: 100%; margin-bottom: 1rem;"></div>
-      <div id="daily-reminders-list" class="mb-3"></div>
       <div class="mt-4">
-      ${notesHtml}
       ${quickAddHtml}
+      ${notesHtml}
+      <div id="daily-reminders-list" class="mb-3"></div>
       </div>
       </div>
       `;
