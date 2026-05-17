@@ -22,6 +22,13 @@ class ReminderController extends Controller
     return ReminderResource::collection($reminders)->response();
   }
 
+  public function datesWithReminders(Request $request): JsonResponse
+  {
+    $user = $request->user();
+
+    return response()->json($this->reminderRepository->datesWithReminders($user->id));
+  }
+
   public function destroy(Request $request, int $id): JsonResponse
   {
     $user = $request->user();

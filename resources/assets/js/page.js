@@ -392,6 +392,7 @@
         <h6>${helpers.escapeHtml(n.title)}</h6>
         ${n.content ? `<p class="small text-muted">${helpers.stripHtml(n.content).substring(0, 100)}...</p>`: ''}
         <a href="#/notes/${n.id}" class="btn btn-sm btn-outline-light">Buka</a>
+        <button class="btn btn-sm btn-outline-warning ms-1 quick-reminder-daily" data-note-id="${n.id}">⏰</button>
         </div>
         </div>
         `).join(''): `<p class="text-muted">Belum ada catatan untuk hari ini.</p>`}
@@ -410,6 +411,7 @@
       return `
       <div id="daily-view">
       <div id="daily-calendar" style="max-width: 100%; margin-bottom: 1rem;"></div>
+      <div id="daily-reminders-list" class="mb-3"></div>
       <div class="mt-4">
       ${notesHtml}
       ${quickAddHtml}

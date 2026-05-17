@@ -11,6 +11,7 @@ use Modules\Notes\Http\Controllers\Api\TagController;
 Route::middleware(['auth:sanctum'])->group(function () {
   Route::prefix('notes')->group(function() {
     Route::get('reminders', [ReminderController::class, 'index']);
+    Route::get('reminders/dates-with-reminders', [ReminderController::class, 'datesWithReminders']);
     Route::patch('reminders/{id}/complete', [ReminderController::class, 'complete']);
     Route::delete('reminders/{id}', [ReminderController::class, 'destroy']);
     Route::get('tags', [TagController::class, 'index']);

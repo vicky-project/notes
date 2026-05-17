@@ -227,27 +227,28 @@
     .ql-snow.ql-toolbar button.ql-active .ql-fill {
     fill: var(--tg-theme-button-color, #ffc107);
     }
-    /* Pastikan tombol tanggal bisa menjadi acuan posisi untuk titik */
-    .vc-date__btn {
-    position: relative;
-    }
-
-    /* Titik kecil di bawah angka, rata tengah secara horizontal */
+    .vc-date__btn { position: relative; }
+    /* Titik kecil default untuk catatan */
     .vc-date__btn.has-notes::after {
     content: '';
     position: absolute;
-    /* Tempatkan di tengah horizontal, dan sedikit di bawah teks */
     bottom: 3px;
     left: 50%;
     transform: translateX(-50%);
-    width: 5px;
-    height: 5px;
+    width: 5px; height: 5px;
     border-radius: 50%;
-    background-color: #ffc107; /* warna kuning/emas */
-    /* Pastikan tidak mengganggu klik */
+    background: #ffc107; /* kuning */
     pointer-events: none;
-    /* Animasi halus saat muncul */
-    transition: opacity 0.2s;
+    }
+    /* Jika ada pengingat, warna titik berubah menjadi oranye/merah */
+    .vc-date__btn.has-reminder::after {
+    background: #ff6b6b; /* merah */
+    width: 6px; height: 6px;
+    }
+    /* Jika ada keduanya (catatan + pengingat), tampilkan titik dengan border */
+    .vc-date__btn.has-notes.has-reminder::after {
+    background: #ffc107;
+    box-shadow: 0 0 0 2px #ff6b6b;
     }
     </style>
     @endpush

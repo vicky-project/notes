@@ -65,6 +65,9 @@
     async getReminders() {
       return tgApp.fetchWithAuth(BASE_URL + '/api/notes/reminders');
     },
+    async getDatesWithReminders() {
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes/reminders/dates-with-reminders');
+    },
     async completeReminder(id) {
       return tgApp.fetchWithAuth(BASE_URL + `/api/notes/reminders/${id}/complete`, {
         method: 'PATCH'

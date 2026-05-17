@@ -49,4 +49,16 @@ class ReminderRepository
   {
     $reminder->delete();
   }
+
+  public function datesWithReminders(int $telegramUserId): array
+  {
+    return Reminder::whereHas('note', fn($q) => $q->where('telegram_user_id', $telegramUserId))
+    ->whereNotNull('remind_at')
+    ->selectRaw('DATE(remind_at) as date')
+    ->distinct()
+    ->pluck('date')
+    ->map(fn($d) => $d)
+    ->values()
+    ->all();
+  }
 }
