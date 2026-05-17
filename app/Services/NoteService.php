@@ -8,7 +8,7 @@ use Modules\Notes\Enums\NoteType;
 use Modules\Notes\Models\Note;
 use Modules\Notes\Models\Tag;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Modules\Telegram\Services\Support\TelegramApi;
+use Illuminate\Support\Carbon;
 
 class NoteService
 {
@@ -33,6 +33,10 @@ class NoteService
   public function createNote(int $telegramUserId, array $data): Note
   {
     $data['telegram_user_id'] = $telegramUserId;
+
+    if (empty($data['note_date'])) {
+      $data['note_date'] = Carbon::today()->format('Y-m-d');
+    }
 
     $tags = $this->parseTags($data['tags'] ?? []);
     unset($data['tags']);
@@ -60,6 +64,10 @@ class NoteService
       throw new ModelNotFoundException('Catatan tidak ditemukan.');
     }
 
+    if (array_key_exists('note_date', $data) && empty($data['note_date'])) {
+      unset($data['note_date']);
+    }
+
     $hasTags = array_key_exists('tags', $data);
     if ($hasTags) {
       $tags = $this->parseTags($data['tags']);
@@ -69,7 +77,7 @@ class NoteService
     $reminderAt = $data['reminder_at'] ?? null;
     unset($data['reminder_at']);
 
-    $type = $data['type'] ?? $note->type?->value;
+    $type = $data['type'] ?? ($note->type instanceof NoteType ? $note->type->value : NoteType::Text->value);
     $content = $data['content'] ?? $note->content;
 
     if ($type === NoteType::Checklist->value) {
@@ -126,6 +134,15 @@ class NoteService
     $this->noteRepository->delete($note);
   }
 
+  public function deleteReminder(int $reminderId, int $telegramUserId): void
+  {
+    $reminder = $this->reminderRepository->findForUser($reminderId, $telegramUserId);
+    if (!$reminder) {
+      throw new ModelNotFoundException('Reminder tidak ditemukan.');
+    }
+    $this->reminderRepository->delete($reminder);
+  }
+
   // Trash methods
   public function getTrashedNotes(int $telegramUserId) {
     return $this->noteRepository->getTrashedNotes($telegramUserId);
@@ -147,15 +164,6 @@ class NoteService
       throw new ModelNotFoundException('Catatan tidak ditemukan di trash.');
     }
     $this->noteRepository->forceDelete($note);
-  }
-
-  public function deleteReminder(int $reminderId, int $telegramUserId): void
-  {
-    $reminder = $this->reminderRepository->findForUser($reminderId, $telegramUserId);
-    if (!$reminder) {
-      throw new ModelNotFoundException('Reminder tidak ditemukan.');
-    }
-    $this->reminderRepository->delete($reminder);
   }
 
   protected function syncTags(Note $note, array $tagNames): void
@@ -192,7 +200,7 @@ class NoteService
       case NoteType::Checklist->value:
         $decoded = json_decode($content, true);
         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-          $normalized = array_map(function($item) {
+          $normalized = array_map(function ($item) {
             if (is_string($item)) return ['text' => $item,
               'done' => false];
             return [
