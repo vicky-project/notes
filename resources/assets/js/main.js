@@ -712,52 +712,48 @@
         if (form.id === 'note-form') {
           const submitBtn = form.querySelector('button[type="submit"]');
           if (!submitBtn) return;
+
           const orig = submitBtn.innerHTML;
           submitBtn.disabled = true;
           submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
           tgApp.showLoading('Menyimpan catatan...');
 
+          // Bungkus semua dalam try-catch agar setiap error tertangkap
           try {
+            // Pastikan tag yang belum di-commit tersimpan
             commitPendingTag();
 
             const type = form.querySelector('select[name="type"]').value;
-            let cv = '';
+            let contentValue = '';
+
             if (type === 'text' && quill) {
-              cv = quill.root.innerHTML;
+              contentValue = quill.root.innerHTML;
             } else if (type === 'checklist') {
-              cv = JSON.stringify(getChecklistItems());
+              contentValue = JSON.stringify(getChecklistItems());
             } else {
               const ci = form.querySelector('input[name="content"]:not([type="hidden"])');
-              cv = ci ? ci.value.trim(): '';
+              contentValue = ci ? ci.value.trim(): '';
             }
 
             const tagsArray = getTagsFromHidden();
             const noteDate = form.querySelector('input[name="note_date"]')?.value || null;
+
             const data = {
               title: form.querySelector('input[name="title"]').value.trim(),
               type: type,
-              content: cv,
+              content: contentValue,
               tags: tagsArray,
               reminder_at: helpers.toUTCDateTime(form.querySelector('input[name="reminder_at"]').value),
               note_date: noteDate || null
             };
 
-            // Jika edit, pastikan catatan masih ada
+            // Jika mode edit, pastikan catatan masih ada
             if (state.currentNote?.id) {
-              let noteExists = false;
+              // Verifikasi keberadaan catatan (akan melempar error jika tidak ditemukan)
               try {
                 await api.getNote(state.currentNote.id);
-                noteExists = true;
               } catch (e) {
-                // catatan tidak ditemukan
-              }
-
-              if (!noteExists) {
-                tgApp.showToast('Catatan sudah tidak tersedia.', 'danger');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = orig;
-                tgApp.hideLoading();
-                return;
+                throw new Error('Catatan sudah tidak tersedia.');
               }
 
               await api.updateNote(state.currentNote.id, data);
@@ -774,10 +770,13 @@
               window.location.hash = '#/notes/all';
             }
           } catch (err) {
-            console.error('Submit error:', err);
-            tgApp.showToast('Gagal menyimpan: ' + (err.message || 'Kesalahan tidak diketahui'), 'danger');
+            // Tampilkan error ke pengguna
+            tgApp.showToast('Gagal menyimpan: ' + (err.message || 'Kesalahan'), 'danger');
+            // Kembalikan tombol
             submitBtn.disabled = false;
             submitBtn.innerHTML = orig;
+            // Log untuk debugging (bisa dilihat di Eruda)
+            console.error('Submit note error:', err);
           } finally {
             tgApp.hideLoading();
           }
