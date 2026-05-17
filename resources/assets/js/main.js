@@ -751,6 +751,8 @@
   }
 
   async function init() {
+    state.setState('activeDate',
+      helpers.getToday());
     try {
       const profile = await api.getProfile();
       const tagsData = await api.getTags();

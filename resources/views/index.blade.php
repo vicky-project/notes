@@ -16,23 +16,33 @@
   </div>
 </div>
 
+{{-- Bottom Navigation --}}
 <nav class="fixed-bottom bg-dark bg-opacity-75 backdrop-blur border-top border-secondary">
   <div class="d-flex justify-content-around align-items-center py-2">
     <a href="#/notes/home" class="nav-link text-decoration-none text-center" data-route="/notes/home">
-      <i class="bi bi-house-door fs-5 d-block"></i><small>Beranda</small>
+      <i class="bi bi-house-door fs-5 d-block"></i>
+      <small>Beranda</small>
     </a>
     <a href="#/notes/all" class="nav-link text-decoration-none text-center" data-route="/notes/all">
-      <i class="bi bi-journals fs-5 d-block"></i><small>Catatan</small>
+      <i class="bi bi-journals fs-5 d-block"></i>
+      <small>Catatan</small>
     </a>
-    <a href="#/notes/create" class="btn btn-warning rounded-circle shadow-lg create-fab d-flex align-items-center justify-content-center"
+    {{-- Tombol + besar di tengah --}}
+    <a href="#/notes/create" class="btn btn-warning rounded-circle shadow-lg d-flex align-items-center justify-content-center"
       style="width: 60px; height: 60px; margin-top: -30px; z-index: 10;">
       <i class="bi bi-plus-lg fs-2"></i>
     </a>
+    <a href="#/notes/daily" class="nav-link text-decoration-none text-center" data-route="/notes/daily">
+      <i class="bi bi-calendar3 fs-5 d-block"></i>
+      <small>Daily</small>
+    </a>
     <a href="#/notes/reminders" class="nav-link text-decoration-none text-center" data-route="/notes/reminders">
-      <i class="bi bi-bell fs-5 d-block"></i><small>Pengingat</small>
+      <i class="bi bi-bell fs-5 d-block"></i>
+      <small>Pengingat</small>
     </a>
     <a href="#/notes/profile" class="nav-link text-decoration-none text-center" data-route="/notes/profile">
-      <i class="bi bi-person-circle fs-5 d-block"></i><small>Profil</small>
+      <i class="bi bi-person-circle fs-5 d-block"></i>
+      <small>Profil</small>
     </a>
   </div>
 </nav>

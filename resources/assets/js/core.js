@@ -18,7 +18,7 @@
     isLoading: false,
     activeRoute: '/notes/home',
     listeners: [],
-    activeDate: helpers.getToday(),
+    activeDate: '',
     subscribe(fn) {
       this.listeners.push(fn);
     },
