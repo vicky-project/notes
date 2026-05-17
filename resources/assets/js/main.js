@@ -808,6 +808,22 @@
           e.preventDefault(); commitPendingTag();
         }
       });
+
+    // Fallback: pastikan tombol submit note-form selalu berfungsi
+    document.addEventListener('click',
+      (e) => {
+        const submitBtn = e.target.closest('#note-form button[type="submit"]');
+        if (submitBtn) {
+          const form = document.getElementById('note-form');
+          if (form) {
+            // Cegah double submit jika event submit asli sudah jalan
+            e.preventDefault();
+            form.dispatchEvent(new Event('submit', {
+              cancelable: true
+            }));
+          }
+        }
+      });
   }
 
   async function init() {
