@@ -99,7 +99,7 @@
       });
     },
     async getTags() {
-      return tgApp.fetchWithAuth(BASE_URL + '/api/tags');
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes/tags');
     },
   };
 
