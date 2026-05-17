@@ -41,18 +41,9 @@ class NoteController extends Controller
 
   public function show(Request $request, $id): NoteResource
   {
-    try {
-      $user = $request->user();
-      $note = $this->noteService->getNote((int) $id, $user->id); // kita tambahkan method
-      return new NoteResource($note);
-    } catch(\Exception $e) {
-      \Log::error("Error find note with id: ". $id, [
-        'message' => $e->getMessage(),
-        'trace' => $e->getTrace()
-      ]);
-
-      return new NoteResource([]);
-    }
+    $user = $request->user();
+    $note = $this->noteService->getNote((int) $id, $user->id); // kita tambahkan method
+    return new NoteResource($note);
   }
 
   public function update(UpdateNoteRequest $request, $id): NoteResource
