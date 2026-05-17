@@ -138,12 +138,21 @@
       return this.formatDateYMD(new Date());
     },
     getCalendarDays(year, month) {
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const startDate = new Date(firstDay);
-      startDate.setDate(1 - firstDay.getDay()); // mundur ke hari Minggu
-      const endDate = new Date(lastDay);
-      endDate.setDate(lastDay.getDate() + (6 - lastDay.getDay())); // maju ke Sabtu
+      // month 0-based (Jan = 0)
+      const firstDayOfMonth = new Date(year, month, 1);
+      const lastDayOfMonth = new Date(year, month + 1, 0);
+
+      // Hari pertama dalam minggu (0 = Minggu, 1 = Senin, ..., 6 = Sabtu)
+      let startDayOfWeek = firstDayOfMonth.getDay(); // 0 = Minggu
+      // Kita ingin mulai dari Senin. Jika Minggu, mundur 6 hari. Jika bukan, mundur (startDayOfWeek - 1) hari.
+      const daysFromMonday = startDayOfWeek === 0 ? 6: startDayOfWeek - 1;
+      const startDate = new Date(firstDayOfMonth);
+      startDate.setDate(1 - daysFromMonday);
+
+      const lastDayOfWeek = lastDayOfMonth.getDay();
+      const daysToSunday = lastDayOfWeek === 0 ? 0: 7 - lastDayOfWeek;
+      const endDate = new Date(lastDayOfMonth);
+      endDate.setDate(lastDayOfMonth.getDate() + daysToSunday);
 
       const days = [];
       let current = new Date(startDate);

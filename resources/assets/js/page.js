@@ -375,6 +375,15 @@
 
       const notesForSelected = state.notes.filter(n => n.note_date === today);
 
+      // Header hari (Senin - Minggu)
+      const dayNames = ['Sen',
+        'Sel',
+        'Rab',
+        'Kam',
+        'Jum',
+        'Sab',
+        'Min'];
+
       let calendarHtml = `
       <div class="d-flex justify-content-between align-items-center mb-3">
       <button id="prev-month" class="btn btn-sm btn-outline-light">&lt;</button>
@@ -384,26 +393,19 @@
       <button id="next-month" class="btn btn-sm btn-outline-light">&gt;</button>
       </div>
       <div class="row row-cols-7 text-center mb-2">
-      <div class="col text-muted small">Min</div>
-      <div class="col text-muted small">Sen</div>
-      <div class="col text-muted small">Sel</div>
-      <div class="col text-muted small">Rab</div>
-      <div class="col text-muted small">Kam</div>
-      <div class="col text-muted small">Jum</div>
-      <div class="col text-muted small">Sab</div>
+      ${dayNames.map(d => `<div class="col text-muted small fw-bold">${d}</div>`).join('')}
       </div>
       <div class="row row-cols-7 text-center" id="calendar-grid">
       ${days.map(d => {
         const dateStr = helpers.formatDateYMD(d);
-        const isToday = dateStr === today;
         const isCurrentMonth = d.getMonth() === month;
         const isSelected = dateStr === today;
         return `
         <div class="col mb-2">
         <button class="btn btn-sm w-100 ${isSelected ? 'btn-warning': (isCurrentMonth ? 'btn-outline-light': 'btn-outline-secondary')} calendar-day-btn"
-        data-date="${dateStr}">
+        data-date="${dateStr}"
+        ${!isCurrentMonth ? 'style="opacity:0.4;"': ''}>
         ${d.getDate()}
-        ${isToday ? '<br><small class="small">📝</small>': ''}
         </button>
         </div>
         `;
@@ -430,7 +432,6 @@
       </div>
       `;
 
-      // Quick add untuk hari yang dipilih
       let quickAddHtml = `
       <div class="mt-3">
       <form id="daily-quick-capture" class="input-group">
