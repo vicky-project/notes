@@ -20,7 +20,7 @@ class NoteController extends Controller
       $notes = $this->noteService->listNotes($user->id, request()->all());
       return NoteResource::collection($notes)->response();
     } catch(\Exception $e) {
-      \Log::error("Error find notes", [
+      \Log::error("Error get all notes", [
         'message' => $e->getMessage(),
         'trace' => $e->getTrace()
       ]);
@@ -28,7 +28,7 @@ class NoteController extends Controller
       return response()->json([
         'success' => false,
         'message' => $e->getMessage(),
-      ], 500)
+      ], 500);
     }
   }
 
@@ -41,10 +41,21 @@ class NoteController extends Controller
 
   public function show(Request $request, $id): NoteResource
   {
-    $user = $request->user();
-    // pengecekan manual di service (bisa pakai policy juga)
-    $note = $this->noteService->getNote((int) $id, $user->id); // kita tambahkan method
-    return new NoteResource($note);
+    try {
+      $user = $request->user();
+      $note = $this->noteService->getNote((int) $id, $user->id); // kita tambahkan method
+      return new NoteResource($note);
+    } catch(\Exception $e) {
+      \Log::error("Error find note with id: ". $id, [
+        'message' => $e->getMessage(),
+        'trace' => $e->getTrace()
+      ]);
+
+      return response()->json([
+        'success' => false,
+        'message' => $e->getMessage(),
+      ], 500);
+    }
   }
 
   public function update(UpdateNoteRequest $request, $id): NoteResource
