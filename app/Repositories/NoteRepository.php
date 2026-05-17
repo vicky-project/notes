@@ -28,7 +28,7 @@ class NoteRepository
 
   public function findForUser(int $id, int $telegramUserId): ?Note
   {
-    return Note::with(['tags', 'reminder'])->where('id', $id)->where('telegram_user_id', $telegramUserId)->firstOrFail();
+    return Note::with(['tags', 'reminder'])->where('id', $id)->where('telegram_user_id', $telegramUserId)->first();
   }
 
   public function create(array $data): Note
