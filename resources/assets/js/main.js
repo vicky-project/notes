@@ -690,16 +690,42 @@ function setupGlobalEvents() {
         const titleInput = form.querySelector('input[name="title"]');
         const title = titleInput?.value.trim();
         if (!title) return;
-        const currentDate = new URLSearchParams(window.location.hash.split('?')[1] || '').get('date') || helpers.getToday();
+
+        // Ambil tanggal aktif dari state (yang sedang ditampilkan)
+        const currentDate = state.activeDate || helpers.getToday();
+
         try {
           const newNote = await api.createNote({
             title, note_date: currentDate
           });
           const noteData = extractData(newNote);
+
+          // Tambahkan ke state.notes
           state.setState('notes', [noteData, ...state.notes]);
+
+          // Reset form
           form.reset();
+
           tgApp.showToast('Catatan harian tersimpan', 'success');
-          document.getElementById('app-content').innerHTML = Page.daily(currentDate);
+
+          // Hanya perbarui daftar catatan, jangan render ulang seluruh halaman
+          const notesForSelected = state.notes.filter(n => n.note_date === currentDate);
+          const listContainer = document.getElementById('daily-notes-list');
+          if (listContainer) {
+            if (notesForSelected.length) {
+              listContainer.innerHTML = notesForSelected.map(n => `
+                <div class="card note-card text-white mb-2">
+                <div class="card-body">
+                <h6>${helpers.escapeHtml(n.title)}</h6>
+                ${n.content ? `<p class="small text-muted">${helpers.stripHtml(n.content).substring(0, 100)}...</p>`: ''}
+                <a href="#/notes/${n.id}" class="btn btn-sm btn-outline-light">Buka</a>
+                </div>
+                </div>
+                `).join('');
+            } else {
+              listContainer.innerHTML = '<p class="text-muted">Belum ada catatan untuk hari ini.</p>';
+            }
+          }
         } catch (err) {
           tgApp.showToast(err.message, 'danger');
         }
