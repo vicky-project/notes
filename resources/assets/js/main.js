@@ -708,7 +708,6 @@ function setupGlobalEvents() {
 
           tgApp.showToast('Catatan harian tersimpan', 'success');
 
-          // Hanya perbarui daftar catatan, jangan render ulang seluruh halaman
           const notesForSelected = state.notes.filter(n => n.note_date === currentDate);
           const listContainer = document.getElementById('daily-notes-list');
           if (listContainer) {
