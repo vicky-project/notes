@@ -215,6 +215,14 @@
       const d = await api.getReminders();
       state.setState('reminders', extractData(d));
       html = Page.reminders();
+    } else if (p.full === '/notes/daily') {
+      const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+      const date = urlParams.get('date') || helpers.getToday();
+      const data = await api.getNotes({
+        date
+      });
+      state.setState('notes', data.data || data);
+      html = Page.daily(date);
     } else if (p.full === '/notes/profile') {
       if (!state.user || !state.user.id) {
         try {
@@ -384,6 +392,45 @@
         e.preventDefault();
         const name = addExistingTag.dataset.tagName;
         addTag(name);
+      }
+
+      const calendarBtn = e.target.closest('.calendar-day-btn');
+      if (calendarBtn) {
+        e.preventDefault();
+        const date = calendarBtn.dataset.date;
+        navigateTo(`#/notes/daily?date=${date}`);
+      }
+
+      // Prev/Next month
+      if (e.target.id === 'prev-month') {
+        e.preventDefault();
+        const current = new Date(state.activeDate || helpers.getToday());
+        current.setMonth(current.getMonth() - 1);
+        navigateTo(`#/notes/daily?date=${helpers.formatDateYMD(current)}`);
+      }
+      if (e.target.id === 'next-month') {
+        e.preventDefault();
+        const current = new Date(state.activeDate || helpers.getToday());
+        current.setMonth(current.getMonth() + 1);
+        navigateTo(`#/notes/daily?date=${helpers.formatDateYMD(current)}`);
+      }
+
+      // Quick capture harian
+      if (form.id === 'daily-quick-capture') {
+        const titleInput = form.querySelector('input[name="title"]');
+        const title = titleInput.value.trim();
+        if (!title) return;
+        const currentDate = new URLSearchParams(window.location.hash.split('?')[1] || '').get('date') || helpers.getToday();
+        try {
+          await api.createNote({
+            title, note_date: currentDate
+          });
+          form.reset();
+          tgApp.showToast('Catatan harian tersimpan', 'success');
+          navigateTo(`#/notes/daily?date=${currentDate}`);
+        } catch (err) {
+          tgApp.showToast(err.message, 'danger');
+        }
       }
 
       // Quick Reminder Toggle

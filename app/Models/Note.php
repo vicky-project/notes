@@ -17,12 +17,14 @@ class Note extends Model
     'title',
     'content',
     'type',
-    'metadata'
+    'metadata',
+    'note_date'
   ];
 
   protected $casts = [
     'metadata' => 'array',
-    'type' => NoteType::class
+    'type' => NoteType::class,
+    'note_date' => 'date'
   ];
 
   public function user() {

@@ -14,9 +14,12 @@ return new class extends Migration {
       $table->string('title');
       $table->longText('content')->nullable();
       $table->string('type')->default('text'); // text, checklist, image, voice
+        $table->date('note_date')->nullable();
         $table->json('metadata')->nullable();
         $table->timestamps();
         $table->softDeletes();
+
+        $table->index('note_date');
       });
     }
 

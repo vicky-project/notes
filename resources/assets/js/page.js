@@ -366,6 +366,89 @@
       `;
     },
 
+    daily(dateStr = null) {
+      const today = dateStr || helpers.getToday();
+      const selectedDate = new Date(today);
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth(); // 0-based
+      const days = helpers.getCalendarDays(year, month);
+
+      const notesForSelected = state.notes.filter(n => n.note_date === today);
+
+      let calendarHtml = `
+      <div class="d-flex justify-content-between align-items-center mb-3">
+      <button id="prev-month" class="btn btn-sm btn-outline-light">&lt;</button>
+      <h6 class="mb-0">${selectedDate.toLocaleDateString('id-ID', {
+        month: 'long', year: 'numeric'
+      })}</h6>
+      <button id="next-month" class="btn btn-sm btn-outline-light">&gt;</button>
+      </div>
+      <div class="row row-cols-7 text-center mb-2">
+      <div class="col text-muted small">Min</div>
+      <div class="col text-muted small">Sen</div>
+      <div class="col text-muted small">Sel</div>
+      <div class="col text-muted small">Rab</div>
+      <div class="col text-muted small">Kam</div>
+      <div class="col text-muted small">Jum</div>
+      <div class="col text-muted small">Sab</div>
+      </div>
+      <div class="row row-cols-7 text-center" id="calendar-grid">
+      ${days.map(d => {
+        const dateStr = helpers.formatDateYMD(d);
+        const isToday = dateStr === today;
+        const isCurrentMonth = d.getMonth() === month;
+        const isSelected = dateStr === today;
+        return `
+        <div class="col mb-2">
+        <button class="btn btn-sm w-100 ${isSelected ? 'btn-warning': (isCurrentMonth ? 'btn-outline-light': 'btn-outline-secondary')} calendar-day-btn"
+        data-date="${dateStr}">
+        ${d.getDate()}
+        ${isToday ? '<br><small class="small">📝</small>': ''}
+        </button>
+        </div>
+        `;
+      }).join('')}
+      </div>
+      `;
+
+      let notesHtml = `
+      <div class="mt-4">
+      <h6>${helpers.escapeHtml(selectedDate.toLocaleDateString('id-ID', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      }))}</h6>
+      <div id="daily-notes-list">
+      ${notesForSelected.length ? notesForSelected.map(n => `
+        <div class="card note-card text-white mb-2">
+        <div class="card-body">
+        <h6>${helpers.escapeHtml(n.title)}</h6>
+        ${n.content ? `<p class="small text-muted">${helpers.stripHtml(n.content).substring(0, 100)}...</p>`: ''}
+        <a href="#/notes/${n.id}" class="btn btn-sm btn-outline-light">Buka</a>
+        </div>
+        </div>
+        `).join(''): `<p class="text-muted">Belum ada catatan untuk hari ini.</p>`}
+      </div>
+      </div>
+      `;
+
+      // Quick add untuk hari yang dipilih
+      let quickAddHtml = `
+      <div class="mt-3">
+      <form id="daily-quick-capture" class="input-group">
+      <input type="text" name="title" class="form-control glass-input" placeholder="Tambah catatan untuk hari ini...">
+      <button type="submit" class="btn btn-warning"><i class="bi bi-plus-lg"></i></button>
+      </form>
+      </div>
+      `;
+
+      return `
+      <div id="daily-view">
+      ${calendarHtml}
+      ${quickAddHtml}
+      ${notesHtml}
+      </div>
+      `;
+    },
+
     profile() {
       const user = state.user || {};
       const avatar = user.photo_url

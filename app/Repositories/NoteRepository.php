@@ -19,6 +19,9 @@ class NoteRepository
         ->orWhere('content', 'like', '%'.$filters['search'].'%');
       });
     })
+    ->when(isset($filters['date']), function($q) use($filters) {
+      $q->whereDate('note_date', $filters['date']);
+    })
     ->latest()
     ->paginate($filters['per_page'] ?? 15);
   }

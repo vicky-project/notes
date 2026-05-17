@@ -18,6 +18,7 @@
     isLoading: false,
     activeRoute: '/notes/home',
     listeners: [],
+    activeDate: helpers.getToday(),
     subscribe(fn) {
       this.listeners.push(fn);
     },
@@ -129,6 +130,28 @@
       if (!localValue) return null;
       // Input datetime-local dianggap waktu lokal, konversi ke UTC
       return new Date(localValue).toISOString();
+    },
+    formatDateYMD(date) {
+      return date.toISOString().slice(0, 10); // YYYY-MM-DD
+    },
+    getToday() {
+      return this.formatDateYMD(new Date());
+    },
+    getCalendarDays(year, month) {
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDate = new Date(firstDay);
+      startDate.setDate(1 - firstDay.getDay()); // mundur ke hari Minggu
+      const endDate = new Date(lastDay);
+      endDate.setDate(lastDay.getDate() + (6 - lastDay.getDay())); // maju ke Sabtu
+
+      const days = [];
+      let current = new Date(startDate);
+      while (current <= endDate) {
+        days.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+      }
+      return days;
     },
     escapeHtml(str) {
       return tgApp.escapeHtml(str);
