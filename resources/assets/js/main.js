@@ -729,12 +729,18 @@ function setupGlobalEvents() {
           commitPendingTag();
           const type = form.querySelector('select[name="type"]').value;
           let contentValue = '';
-          if (type === 'text' && quill) contentValue = quill.root.innerHTML;
-          else if (type === 'checklist') contentValue = JSON.stringify(getChecklistItems());
-          else {
-            const ci = form.querySelector('input[name="content"]:not([type="hidden"])');
+          if (type === 'text' && quill) {
+            contentValue = quill.root.innerHTML;
+          } else if (type === 'checklist') {
+            contentValue = JSON.stringify(getChecklistItems());
+          } else if (type === 'image') {
+            const ci = form.querySelector('#input-image-url');
+            contentValue = ci ? ci.value.trim(): '';
+          } else if (type === 'voice') {
+            const ci = form.querySelector('#input-voice-url');
             contentValue = ci ? ci.value.trim(): '';
           }
+
           const tagsArray = getTagsFromHidden();
           const noteDate = form.querySelector('input[name="note_date"]')?.value || null;
           const data = {

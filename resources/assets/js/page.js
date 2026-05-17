@@ -250,13 +250,13 @@
       <!-- Image Input -->
       <div id="image-wrapper" class="mb-3" style="${type === 'image' ? '': 'display:none;'}">
       <label class="form-label">URL Gambar</label>
-      <input type="url" name="content" value="${helpers.escapeHtml(note.content || '')}" class="form-control glass-input" placeholder="https://...">
+      <input type="url" id="input-image-url" value="${type === 'image' ? helpers.escapeHtml(note.content || ''): ''}" class="form-control glass-input" placeholder="https://...">
       </div>
 
       <!-- Voice Input -->
       <div id="voice-wrapper" class="mb-3" style="${type === 'voice' ? '': 'display:none;'}">
       <label class="form-label">URL Suara</label>
-      <input type="url" name="content" value="${helpers.escapeHtml(note.content || '')}" class="form-control glass-input" placeholder="https://...">
+      <input type="url" id="input-voice-url" value="${type === 'voice' ? helpers.escapeHtml(note.content || ''): ''}" class="form-control glass-input" placeholder="https://...">
       </div>
 
       <!-- Hidden input untuk text & checklist -->
