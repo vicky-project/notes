@@ -18,6 +18,7 @@ class StoreNoteRequest extends FormRequest
       'tags.*' => 'string|max:50',
       'reminder_at' => 'nullable|date',
       'metadata' => 'nullable|array',
+      'note_date' => 'nullable|date'
     ];
   }
 }

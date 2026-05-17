@@ -383,20 +383,9 @@
 
       const notesForSelected = state.notes.filter(n => n.note_date === today);
 
-      return `
-      <div id="daily-view">
-      <div id="daily-calendar" style="max-width: 100%; margin-bottom: 1rem;"></div>
-      <div class="mt-3">
-      <div class="d-flex gap-2">
-      <form id="daily-quick-capture" class="input-group flex-grow-1">
-      <input type="text" name="title" class="form-control glass-input" placeholder="Tambah cepat...">
-      <button type="submit" class="btn btn-warning"><i class="bi bi-plus-lg"></i></button>
-      </form>
-      <a href="#/notes/create?date=${today}" class="btn btn-outline-light"><i class="bi bi-pencil-square"></i> Lengkap</a>
-      </div>
-      </div>
-      <div class="mt-4">
-      <h6>${helpers.escapeHtml(selectedDate.toLocaleDateString('id-ID', {
+      // Daftar catatan pada tanggal terpilih
+      const notesHtml = `
+      <h6 class="mb-3">${helpers.escapeHtml(selectedDate.toLocaleDateString('id-ID', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
       }))}</h6>
       <div id="daily-notes-list">
@@ -410,6 +399,27 @@
         </div>
         `).join(''): `<p class="text-muted">Belum ada catatan untuk hari ini.</p>`}
       </div>
+      `;
+
+      // Form cepat + tombol lengkap (selalu tampil setelah daftar catatan)
+      const quickAddHtml = `
+      <div class="mt-3">
+      <div class="d-flex gap-2">
+      <form id="daily-quick-capture" class="input-group flex-grow-1">
+      <input type="text" name="title" class="form-control glass-input" placeholder="Tambah cepat...">
+      <button type="submit" class="btn btn-warning"><i class="bi bi-plus-lg"></i></button>
+      </form>
+      <a href="#/notes/create?date=${today}" class="btn btn-outline-light"><i class="bi bi-pencil-square"></i> Lengkap</a>
+      </div>
+      </div>
+      `;
+
+      return `
+      <div id="daily-view">
+      <div id="daily-calendar" style="max-width: 100%; margin-bottom: 1rem;"></div>
+      <div class="mt-4">
+      ${notesHtml}
+      ${quickAddHtml}
       </div>
       </div>
       `;
