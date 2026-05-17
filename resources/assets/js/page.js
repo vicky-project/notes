@@ -383,7 +383,7 @@
       const notesForSelected = state.notes.filter(n => n.note_date === today);
 
       const notesHtml = `
-      <h6 class="mb-3">${helpers.escapeHtml(selectedDate.toLocaleDateString('id-ID', {
+      <h6 class="mb-3" id="daily-date-heading">${helpers.escapeHtml(selectedDate.toLocaleDateString('id-ID', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
       }))}</h6>
       <div id="daily-notes-list">
