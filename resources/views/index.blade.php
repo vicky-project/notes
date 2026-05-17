@@ -4,15 +4,26 @@
 
 @section('content')
 <div id="app-content" class="p-3 pb-5 mb-5">
-  <div class="d-flex justify-content-center align-items-center" style="height: 60vh;">
-    <div class="text-center">
-      <div class="spinner-border text-secondary mb-2" role="status">
-        <span class="visually-hidden">Memuat...</span>
-      </div>
-      <p class="text-muted">
-        Memuat catatan...
-      </p>
-    </div>
+  <!-- Loading Overlay Awal -->
+  <div id="initial-loading" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    color: white;
+    font-family: sans-serif;
+    transition: opacity 0.3s ease;">
+
+    <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+    <h5>Memuat Aplikasi...</h5>
   </div>
 </div>
 
