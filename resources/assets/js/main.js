@@ -223,6 +223,29 @@
     }
   }
 
+  async function updateCalendarPopups() {
+    if (!calendar) return;
+
+    let datesWithNotes = [];
+    try {
+      datesWithNotes = await api.getDatesWithNotes();
+    } catch (err) {}
+
+    // Susun ulang objek popups
+    const popups = {};
+    (datesWithNotes || []).forEach(date => {
+      popups[date] = {
+        modifier: 'has-notes',
+      };
+    });
+
+    // Terapkan ke instance kalender yang sudah ada
+    calendar.popups = popups;
+    calendar.update({
+      dates: true
+    });
+  }
+
   async function initDailyCalendar() {
     const container = document.getElementById('daily-calendar');
     if (!container || !window.VanillaCalendarPro) return;
@@ -231,22 +254,6 @@
       calendar.destroy();
       calendar = null;
     }
-
-    let datesWithNotes = [];
-    try {
-      datesWithNotes = await tgApp.fetchWithAuth(BASE_URL + '/api/notes/dates-with-notes');
-    } catch (err) {
-      // jika gagal, kalender tetap tampil tanpa penanda
-    }
-
-    // Susun objek popups
-    const popups = {};
-    (datesWithNotes || []).forEach(date => {
-      popups[date] = {
-        modifier: 'has-notes', // class CSS untuk penanda visual
-        html: '<div>Ada catatan</div>' // opsional, bisa diisi jumlah catatan
-      };
-    });
 
     const selectedDate = state.activeDate || helpers.getToday();
     const {
@@ -264,7 +271,6 @@
           day: 'single'
         }
       },
-      popups: popups,
       onClickDate(self, event) {
         const btn = event.target.closest('[data-vc-date-btn]');
         if (btn) {
@@ -285,6 +291,7 @@
       }
     });
     calendar.init();
+    await updateCalendarPopups();
   }
 
   // ---------- Routing ----------
@@ -696,6 +703,7 @@
               title, note_date: currentDate
             }); const nd = extractData(nn);
             state.setState('notes', [nd, ...state.notes]); form.reset(); tgApp.showToast('Catatan harian tersimpan', 'success');
+            updateCalendarPopups();
             loadDailyNotes(currentDate);
           } catch (err) {
             tgApp.showToast(err.message, 'danger');

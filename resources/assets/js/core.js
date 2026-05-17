@@ -102,6 +102,9 @@
     async getTags() {
       return tgApp.fetchWithAuth(BASE_URL + '/api/notes/tags');
     },
+    async getDatesWithNotes() {
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes/dates-with-notes');
+    },
   };
 
   const helpers = {
