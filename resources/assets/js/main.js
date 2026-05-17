@@ -20,12 +20,13 @@
 
   const extractData = r => r?.data || r;
   const parsePath = hash => {
-    const path = hash.replace('#', '') || '/notes/home';
-    const parts = path.split('/').filter(Boolean);
+    const rawPath = hash.replace('#', '') || '/notes/home';
+    const pathOnly = rawPath.split('?')[0];
+    const parts = pathOnly.split('/').filter(Boolean);
     return {
       full: '/' + parts.join('/'),
       parts,
-      isEdit: path.endsWith('/edit')
+      isEdit: pathOnly.endsWith('/edit')
     };
   };
 
