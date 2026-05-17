@@ -1,4 +1,4 @@
-// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist, Image, Voice, Trash, AI
+// Main.js - Inisialisasi, routing, event delegation, Quill, Checklist, Image, Voice, Trash, AI, Daily
 (function(window) {
   'use strict';
 
@@ -115,8 +115,7 @@
       <span class="badge bg-secondary d-flex align-items-center">
       ${helpers.escapeHtml(name)}
       <button type="button" class="btn-close btn-close-white ms-1" style="font-size:0.5rem;" data-remove-tag="${helpers.escapeHtml(name)}"></button>
-      </span>
-      `).join('');
+      </span>`).join('');
   }
   function addTag(name) {
     const tags = getTagsFromHidden();
@@ -218,6 +217,7 @@
     } else if (p.full === '/notes/daily') {
       const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
       const date = urlParams.get('date') || helpers.getToday();
+      state.setState('activeDate', date);
       const data = await api.getNotes({
         date
       });
@@ -361,7 +361,11 @@
           await api.completeReminder(id);
           state.setState('reminders', state.reminders.filter(r => r.id != id));
           tgApp.showToast('Pengingat selesai', 'success');
-          navigateTo(window.location.hash);
+          if (state.activeRoute === '/notes/reminders') {
+            document.getElementById('app-content').innerHTML = Page.reminders();
+          } else if (state.activeRoute === '/notes/home') {
+            document.getElementById('app-content').innerHTML = Page.home();
+          }
         } catch(err) {
           tgApp.showToast(err.message, 'danger');
         }
@@ -415,35 +419,17 @@
         navigateTo(`#/notes/daily?date=${helpers.formatDateYMD(current)}`);
       }
 
-      // Quick capture harian
-      if (form.id === 'daily-quick-capture') {
-        const titleInput = form.querySelector('input[name="title"]');
-        const title = titleInput.value.trim();
-        if (!title) return;
-        const currentDate = new URLSearchParams(window.location.hash.split('?')[1] || '').get('date') || helpers.getToday();
-        try {
-          await api.createNote({
-            title, note_date: currentDate
-          });
-          form.reset();
-          tgApp.showToast('Catatan harian tersimpan', 'success');
-          navigateTo(`#/notes/daily?date=${currentDate}`);
-        } catch (err) {
-          tgApp.showToast(err.message, 'danger');
-        }
-      }
-
       // Quick Reminder Toggle
       if (e.target.id === 'quick-reminder-btn') {
         e.preventDefault();
-        const form = document.getElementById('quick-reminder-form');
-        if (form) form.style.display = form.style.display === 'none' ? 'block': 'none';
+        const formEl = document.getElementById('quick-reminder-form');
+        if (formEl) formEl.style.display = formEl.style.display === 'none' ? 'block': 'none';
       }
       // Cancel
       if (e.target.id === 'quick-reminder-cancel') {
         e.preventDefault();
-        const form = document.getElementById('quick-reminder-form');
-        if (form) form.style.display = 'none';
+        const formEl = document.getElementById('quick-reminder-form');
+        if (formEl) formEl.style.display = 'none';
       }
       // Save
       if (e.target.id === 'quick-reminder-save') {
@@ -484,6 +470,7 @@
           tgApp.hideLoading();
         }
       }
+
       const removeBtn = e.target.closest('[data-remove-tag]');
       if (removeBtn) {
         e.preventDefault();
@@ -584,7 +571,6 @@
 
       // ---------- AI Events ----------
       if (state.aiEnabled) {
-        // AI Search button
         if (e.target.id === 'ai-search-btn' || e.target.closest('#ai-search-btn')) {
           e.preventDefault();
           const searchInput = document.getElementById('search-notes');
@@ -609,7 +595,6 @@
           }
         }
 
-        // Summarize button
         if (e.target.id === 'summarize-btn' || e.target.closest('#summarize-btn')) {
           e.preventDefault();
           const note = state.currentNote;
@@ -627,8 +612,7 @@
               <div class="card bg-warning bg-opacity-10 border-warning p-3 mt-2">
               <h6 class="text-warning"><i class="bi bi-stars me-1"></i>Ringkasan AI</h6>
               <p class="mb-0">${result.summary}</p>
-              </div>
-              `;
+              </div>`;
             }
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Teringkas';
             setTimeout(() => {
@@ -669,6 +653,24 @@
             tgApp.showToast(err.message, 'danger');
           }
         }
+
+        if (form.id === 'daily-quick-capture') {
+          const titleInput = form.querySelector('input[name="title"]');
+          const title = titleInput?.value.trim();
+          if (!title) return;
+          const currentDate = new URLSearchParams(window.location.hash.split('?')[1] || '').get('date') || helpers.getToday();
+          try {
+            await api.createNote({
+              title, note_date: currentDate
+            });
+            form.reset();
+            tgApp.showToast('Catatan harian tersimpan', 'success');
+            navigateTo(`#/notes/daily?date=${currentDate}`);
+          } catch (err) {
+            tgApp.showToast(err.message, 'danger');
+          }
+        }
+
         if (form.id === 'note-form') {
           const submitBtn = form.querySelector('button[type="submit"]');
           const originalText = submitBtn.innerHTML;
@@ -755,11 +757,8 @@
       helpers.getToday());
     try {
       const profile = await api.getProfile();
-      const tagsData = await api.getTags();
       state.setState('user',
         profile);
-      state.setState('allTags',
-        tagsData || []);
     } catch(err) {
       const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
       if (tgUser) state.setState('user', {
@@ -767,6 +766,11 @@
         username: tgUser.username || null, photo_url: tgUser.photo_url || null
       });
     }
+    // Muat tags secara terpisah agar tidak saling memengaruhi
+    try {
+      const tagsData = await api.getTags();
+      state.setState('allTags', tagsData || []);
+    } catch(err) {}
 
     window.addEventListener('hashchange', () => navigateTo(window.location.hash));
     if (!window.location.hash) window.location.hash = '#/notes/home';
