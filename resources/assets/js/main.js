@@ -223,7 +223,7 @@
     }
   }
 
-  function initDailyCalendar() {
+  async function initDailyCalendar() {
     const container = document.getElementById('daily-calendar');
     if (!container || !window.VanillaCalendarPro) return;
 
