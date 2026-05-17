@@ -736,7 +736,8 @@ function setupGlobalEvents() {
           type: type,
           content: contentValue,
           tags: tagsArray,
-          reminder_at: helpers.toUTCDateTime(form.querySelector('input[name="reminder_at"]').value)
+          reminder_at: helpers.toUTCDateTime(form.querySelector('input[name="reminder_at"]').value),
+          note_date: form.querySelector('input[name="note_date"]')?.value || null
         };
 
         try {

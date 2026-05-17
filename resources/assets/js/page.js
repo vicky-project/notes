@@ -205,6 +205,15 @@
       const reminderValue = reminderAt ? new Date(reminderAt).toISOString().slice(0, 16): '';
       const type = note.type || 'text';
 
+      // Ambil parameter date dari hash untuk mode create
+      let defaultDate = '';
+      if (mode === 'create') {
+        const hash = window.location.hash;
+        const queryString = hash.split('?')[1] || '';
+        const params = new URLSearchParams(queryString);
+        defaultDate = params.get('date') || '';
+      }
+
       return `
       <form id="note-form" class="card glass-card text-white border-0 p-3">
       <div class="mb-3">
@@ -253,6 +262,8 @@
 
       <!-- Hidden input untuk text & checklist -->
       <input type="hidden" name="content" value="">
+
+      <input type="hidden" name="note_date" value="${helpers.escapeHtml(defaultDate || note.note_date || '')}">
 
       <div class="mb-3">
       <label class="form-label">Tag</label>
@@ -376,10 +387,13 @@
       <div id="daily-view">
       <div id="daily-calendar" style="max-width: 100%; margin-bottom: 1rem;"></div>
       <div class="mt-3">
-      <form id="daily-quick-capture" class="input-group">
-      <input type="text" name="title" class="form-control glass-input" placeholder="Tambah catatan untuk hari ini...">
+      <div class="d-flex gap-2">
+      <form id="daily-quick-capture" class="input-group flex-grow-1">
+      <input type="text" name="title" class="form-control glass-input" placeholder="Tambah cepat...">
       <button type="submit" class="btn btn-warning"><i class="bi bi-plus-lg"></i></button>
       </form>
+      <a href="#/notes/create?date=${today}" class="btn btn-outline-light"><i class="bi bi-pencil-square"></i> Lengkap</a>
+      </div>
       </div>
       <div class="mt-4">
       <h6>${helpers.escapeHtml(selectedDate.toLocaleDateString('id-ID', {
