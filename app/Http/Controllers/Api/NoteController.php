@@ -15,9 +15,21 @@ class NoteController extends Controller
 
   public function index(Request $request): JsonResponse
   {
-    $user = $request->user();
-    $notes = $this->noteService->listNotes($user->id, request()->all());
-    return NoteResource::collection($notes)->response();
+    try {
+      $user = $request->user();
+      $notes = $this->noteService->listNotes($user->id, request()->all());
+      return NoteResource::collection($notes)->response();
+    } catch(\Exception $e) {
+      \Log::error("Error find notes", [
+        'message' => $e->getMessage(),
+        'trace' => $e->getTrace()
+      ]);
+
+      return response()->json([
+        'success' => false,
+        'message' => $e->getMessage(),
+      ], 500)
+    }
   }
 
   public function store(StoreNoteRequest $request): JsonResponse
