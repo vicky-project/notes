@@ -12,6 +12,7 @@
     user: null,
     notes: [],
     currentNote: null,
+    allTags: [],
     tags: [],
     reminders: [],
     isLoading: false,
@@ -95,7 +96,10 @@
       return tgApp.fetchWithAuth(BASE_URL + `/api/ai/note/${id}/summarize`, {
         method: 'POST'
       });
-    }
+    },
+    async getTags() {
+      return tgApp.fetchWithAuth(BASE_URL + '/api/tags');
+    },
   };
 
   const helpers = {

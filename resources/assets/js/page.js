@@ -268,6 +268,20 @@
         `).join('')}
       </div>
       <input type="hidden" name="tags" value='${JSON.stringify(tagNames)}'>
+
+      <!-- Tag yang Sudah Ada -->
+      ${state.allTags.length > 0 ? `
+      <div class="mt-2">
+      <small class="text-muted">Tag yang sudah ada (klik untuk menambah):</small>
+      <div class="d-flex flex-wrap gap-1 mt-1">
+      ${state.allTags.filter(t => !tagNames.includes(t.name)).map(tag => `
+        <span class="badge bg-dark border border-secondary add-existing-tag" data-tag-name="${helpers.escapeHtml(tag.name)}" style="cursor:pointer;">
+        ${helpers.escapeHtml(tag.name)}
+        </span>
+        `).join('')}
+      </div>
+      </div>
+      `: ''}
       </div>
 
       <div class="mb-3">

@@ -378,6 +378,14 @@
         }
       }
 
+      // Klik tag yang sudah ada
+      const addExistingTag = e.target.closest('.add-existing-tag');
+      if (addExistingTag) {
+        e.preventDefault();
+        const name = addExistingTag.dataset.tagName;
+        addTag(name);
+      }
+
       // Quick Reminder Toggle
       if (e.target.id === 'quick-reminder-btn') {
         e.preventDefault();
@@ -698,8 +706,11 @@
   async function init() {
     try {
       const profile = await api.getProfile();
+      const tagsData = await api.getTags();
       state.setState('user',
         profile);
+      state.setState('allTags',
+        tagsData || []);
     } catch(err) {
       const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
       if (tgUser) state.setState('user', {
