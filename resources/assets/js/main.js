@@ -195,7 +195,6 @@
 
     const selectedDate = state.activeDate || helpers.getToday();
 
-    // Destructure the Calendar constructor
     const {
       Calendar
     } = window.VanillaCalendarPro;
@@ -212,10 +211,13 @@
           day: 'single',
         },
       },
-      onChange: (event) => {
-        const newDate = event.detail.selectedDate;
-        if (newDate) {
-          navigateTo(`#/notes/daily?date=${newDate}`);
+      onClickDate(self, event) {
+        const target = event.target.closest('[data-calendar-date]');
+        if (target) {
+          const date = target.dataset.calendarDate;
+          if (date) {
+            navigateTo(`#/notes/daily?date=${date}`);
+          }
         }
       },
       classes: {
