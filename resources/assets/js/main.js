@@ -212,11 +212,14 @@
         },
       },
       onClickDate(self, event) {
-        const target = event.target.closest('[data-calendar-date]');
-        if (target) {
-          const date = target.dataset.calendarDate;
-          if (date) {
-            navigateTo(`#/notes/daily?date=${date}`);
+        const btn = event.target.closest('[data-vc-date-btn]');
+        if (btn) {
+          const dateDiv = btn.closest('[data-vc-date]');
+          if (dateDiv) {
+            const date = dateDiv.dataset.vcDate;
+            if (date) {
+              navigateTo(`#/notes/daily?date=${date}`);
+            }
           }
         }
       },
