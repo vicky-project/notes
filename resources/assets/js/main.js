@@ -710,15 +710,20 @@
           }
         }
         if (form.id === 'note-form') {
-          const submitBtn = form.querySelector('button[type="submit"]'); const orig = submitBtn.innerHTML;
-          submitBtn.disabled = true; submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...'; tgApp.showLoading('Menyimpan catatan...');
+          const submitBtn = form.querySelector('button[type="submit"]');
+          const orig = submitBtn.innerHTML;
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+          tgApp.showLoading('Menyimpan catatan...');
           commitPendingTag();
+
           const type = form.querySelector('select[name="type"]').value;
           let cv = '';
           if (type === 'text' && quill) cv = quill.root.innerHTML;
           else if (type === 'checklist') cv = JSON.stringify(getChecklistItems());
           else {
-            const ci = form.querySelector('input[name="content"]:not([type="hidden"])'); cv = ci ? ci.value.trim(): '';
+            const ci = form.querySelector('input[name="content"]:not([type="hidden"])');
+            cv = ci ? ci.value.trim(): '';
           }
           const tagsArray = getTagsFromHidden();
           const noteDate = form.querySelector('input[name="note_date"]')?.value || null;
@@ -730,21 +735,47 @@
             reminder_at: helpers.toUTCDateTime(form.querySelector('input[name="reminder_at"]').value),
             note_date: noteDate
           };
+
           try {
             if (state.currentNote?.id) {
-              await api.updateNote(state.currentNote.id, data); tgApp.showToast('Catatan diperbarui', 'success');
+              // ✅ Verifikasi bahwa catatan masih ada dengan fetch ulang
+              let noteExists = true;
+              try {
+                await api.getNote(state.currentNote.id);
+              } catch (err) {
+                noteExists = false;
+              }
+
+              if (!noteExists) {
+                tgApp.showToast('Catatan sudah tidak ada.', 'danger');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = orig;
+                tgApp.hideLoading();
+                return;
+              }
+
+              await api.updateNote(state.currentNote.id, data);
+              tgApp.showToast('Catatan diperbarui', 'success');
             } else {
-              await api.createNote(data); tgApp.showToast('Catatan dibuat', 'success');
+              await api.createNote(data);
+              tgApp.showToast('Catatan dibuat', 'success');
             }
+
             if (noteDate) {
               window.location.hash = `#/notes/daily?date=${noteDate}`;
             } else {
               window.location.hash = '#/notes/all';
             }
           } catch(err) {
-            tgApp.showToast(err.message, 'danger'); submitBtn.disabled = false; submitBtn.innerHTML = orig;
-          }
-          finally {
+            // Tangani error, termasuk jika catatan tidak ditemukan
+            if (err.message.includes('tidak ditemukan')) {
+              tgApp.showToast('Catatan sudah dihapus atau tidak tersedia.', 'danger');
+            } else {
+              tgApp.showToast(err.message, 'danger');
+            }
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = orig;
+          } finally {
             tgApp.hideLoading();
           }
         }
