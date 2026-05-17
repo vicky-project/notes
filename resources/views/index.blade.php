@@ -226,11 +226,5 @@
     background: #ffc107;  /* warna kuning/emas */
     margin: 2px auto 0;
     }
-
-    /* Atau Anda bisa memberi latar belakang samar */
-    .vc-date__btn.has-notes {
-    background: rgba(255, 193, 7, 0.2);
-    border-radius: 50%;
-    }
     </style>
     @endpush
