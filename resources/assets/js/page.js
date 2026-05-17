@@ -400,7 +400,7 @@
       `;
 
       const quickAddHtml = `
-      <div class="mt-3">
+      <div class="mb-3">
       <form id="daily-quick-capture" class="input-group">
       <input type="text" name="title" class="form-control glass-input" placeholder="Tambah cepat...">
       <button type="submit" class="btn btn-warning"><i class="bi bi-plus-lg"></i></button>
