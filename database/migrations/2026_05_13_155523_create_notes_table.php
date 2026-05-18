@@ -12,11 +12,14 @@ return new class extends Migration {
       ->constrained('telegram_users')
       ->onDelete('cascade');
       $table->string('title');
-      $table->text('content')->nullable();
+      $table->longText('content')->nullable();
       $table->string('type')->default('text'); // text, checklist, image, voice
+        $table->date('note_date')->nullable();
         $table->json('metadata')->nullable();
         $table->timestamps();
         $table->softDeletes();
+
+        $table->index('note_date');
       });
     }
 

@@ -1,4 +1,5 @@
 <?php
+
 namespace Modules\Notes\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -13,9 +14,17 @@ class NoteResource extends JsonResource
       'content' => $this->content,
       'type' => $this->type,
       'metadata' => $this->metadata,
+      'note_date' => $this->note_date ? $this->note_date->format('Y-m-d') : null,
       'created_at' => $this->created_at->toIso8601String(),
       'updated_at' => $this->updated_at->toIso8601String(),
-      'tags' => $this->whenLoaded('tags', fn() => $this->tags->makeHidden('pivot')),
+      'deleted_at' => $this->deleted_at ? $this->deleted_at->toIso8601String() : null,
+      'tags' => $this->whenLoaded('tags', function () {
+        return $this->tags->map(fn($tag) => [
+          'id' => $tag->id,
+          'name' => $tag->name,
+          'color' => $tag->color,
+        ]);
+      }) ?? [],
       'reminder' => new ReminderResource($this->whenLoaded('reminder')),
     ];
   }

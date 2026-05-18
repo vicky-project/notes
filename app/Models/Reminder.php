@@ -7,13 +7,17 @@ class Reminder extends Model
 {
   protected $table = 'notes_reminders';
 
-  protected $fillable = ['note_id',
+  protected $fillable = [
+    'note_id',
     'remind_at',
-    'is_completed'];
+    'is_completed',
+    'notified_at'
+  ];
 
   protected $casts = [
     'remind_at' => 'datetime',
     'is_completed' => 'boolean',
+    'notified_at' => 'datetime',
   ];
 
   public function note() {

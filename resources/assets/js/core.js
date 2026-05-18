@@ -8,39 +8,45 @@
     return;
   }
 
-  // ========== App State ==========
   const AppState = {
     user: null,
     notes: [],
     currentNote: null,
+    allTags: [],
     tags: [],
     reminders: [],
     isLoading: false,
     activeRoute: '/notes/home',
     listeners: [],
+    activeDate: '',
     subscribe(fn) {
       this.listeners.push(fn);
     },
     setState(key, value) {
-      this[key] = value;
-      this.notify();
+      this[key] = value; this.notify();
     },
     notify() {
       this.listeners.forEach(fn => fn(this));
-    }
+    },
+    pagination: {
+      currentPage: 1,
+      lastPage: 1
+    },
+    trashedNotes: [],
+    aiEnabled: window.NotesConfig?.aiEnabled ?? false,
+    searchKeyword: '',
   };
 
-  // ========== API Helper ==========
   const api = {
     async getNotes(params = {}) {
       const query = new URLSearchParams(params).toString();
-      return tgApp.fetchWithAuth(BASE_URL+ `/api/notes?${query}`);
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes?${query}`);
     },
     async getNote(id) {
-      return tgApp.fetchWithAuth(BASE_URL+ `/api/notes/${id}`);
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes/${id}`);
     },
     async createNote(data) {
-      return tgApp.fetchWithAuth(BASE_URL+ '/api/notes', {
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes', {
         method: 'POST',
         body: JSON.stringify(data)
       });
@@ -59,17 +65,51 @@
     async getReminders() {
       return tgApp.fetchWithAuth(BASE_URL + '/api/notes/reminders');
     },
+    async getDatesWithReminders() {
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes/reminders/dates-with-reminders');
+    },
     async completeReminder(id) {
-      return tgApp.fetchWithAuth(BASE_URL+ `/api/notes/reminders/${id}/complete`, {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes/reminders/${id}/complete`, {
         method: 'PATCH'
+      });
+    },
+    async deleteReminder(id) {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes/reminders/${id}`, {
+        method: 'DELETE'
       });
     },
     async getProfile() {
       return tgApp.fetchWithAuth(BASE_URL + '/api/notes/profile');
-    }
+    },
+    async getTrashedNotes() {
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes/trashed');
+    },
+    async restoreNote(id) {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes/${id}/restore`, {
+        method: 'PATCH'
+      });
+    },
+    async forceDeleteNote(id) {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/notes/${id}/force`, {
+        method: 'DELETE'
+      });
+    },
+    async aiSearch(query) {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/ai/search?query=${encodeURIComponent(query)}`);
+    },
+    async summarizeNote(id) {
+      return tgApp.fetchWithAuth(BASE_URL + `/api/ai/note/${id}/summarize`, {
+        method: 'POST'
+      });
+    },
+    async getTags() {
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes/tags');
+    },
+    async getDatesWithNotes() {
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes/dates-with-notes');
+    },
   };
 
-  // ========== Helpers ==========
   const helpers = {
     formatDate(dateString) {
       const date = new Date(dateString);
@@ -77,8 +117,39 @@
         day: 'numeric', month: 'short', year: 'numeric'
       });
     },
+    formatDateTime(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      }) + ', ' +
+      date.toLocaleTimeString('id-ID', {
+        hour: '2-digit', minute: '2-digit'
+      });
+    },
+    toLocalInputValue(utcString) {
+      if (!utcString) return '';
+      const date = new Date(utcString);
+      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return local.toISOString().slice(0, 16);
+    },
+    toUTCDateTime(localValue) {
+      if (!localValue) return null;
+      return new Date(localValue).toISOString();
+    },
+    formatDateYMD(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    },
+    getToday() {
+      return this.formatDateYMD(new Date());
+    },
     escapeHtml(str) {
       return tgApp.escapeHtml(str);
+    },
+    stripHtml(html) {
+      return (html || '').replace(/<[^>]*>/g, '');
     },
     debounce(func, delay) {
       let timeout;
@@ -92,12 +163,10 @@
     }
   };
 
-  // ========== Ekspos ke global ==========
   window.Core = {
     state: AppState,
     api,
     helpers,
     tgApp
   };
-
 })(window);

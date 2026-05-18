@@ -3,17 +3,27 @@
 @section('title', 'Notes')
 
 @section('content')
-<div id="app-content" class="p-3 pb-5">
-  {{-- Placeholder loading awal --}}
-  <div class="d-flex justify-content-center align-items-center" style="height: 60vh;">
-    <div class="text-center">
-      <div class="spinner-border text-secondary mb-2" role="status">
-        <span class="visually-hidden">Memuat...</span>
-      </div>
-      <p class="text-muted">
-        Memuat catatan...
-      </p>
-    </div>
+<div id="app-content" class="p-3 pb-5 mb-5">
+  <!-- Loading Overlay Awal -->
+  <div id="initial-loading" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    color: white;
+    font-family: sans-serif;
+    transition: opacity 0.3s ease;">
+
+    <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+    <h5>Memuat Aplikasi...</h5>
   </div>
 </div>
 
@@ -30,8 +40,12 @@
     </a>
     {{-- Tombol + besar di tengah --}}
     <a href="#/notes/create" class="btn btn-warning rounded-circle shadow-lg d-flex align-items-center justify-content-center"
-      style="width: 60px; height: 60px; margin-top: -30px; z-index: 10; transition: transform 0.2s;">
+      style="width: 60px; height: 60px; margin-top: -30px; z-index: 10;">
       <i class="bi bi-plus-lg fs-2"></i>
+    </a>
+    <a href="#/notes/daily" class="nav-link text-decoration-none text-center" data-route="/notes/daily">
+      <i class="bi bi-calendar3 fs-5 d-block"></i>
+      <small>Daily</small>
     </a>
     <a href="#/notes/reminders" class="nav-link text-decoration-none text-center" data-route="/notes/reminders">
       <i class="bi bi-bell fs-5 d-block"></i>
@@ -46,13 +60,17 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/index.js" defer></script>
 <script src="//cdn.jsdelivr.net/npm/eruda"></script>
 <script>
   eruda.init();
 </script>
 <script>
   const BASE_URL = '{{ rtrim(config("app.url"), "/") }}';
-
+  window.NotesConfig = {
+    aiEnabled: {{ $aiEnabled ? 'true' : 'false'}}
+  };
   {!! file_get_contents(module_path('notes', 'resources/assets/js/core.js')); !!}
   {!! file_get_contents(module_path('notes', 'resources/assets/js/page.js')); !!}
   {!! file_get_contents(module_path('notes', 'resources/assets/js/main.js')); !!}
@@ -60,23 +78,17 @@
 @endpush
 
 @push('styles')
+<link href="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/styles/index.css" rel="stylesheet">
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 <style>
-  /* ========== Global ========== */
   body {
     background-color: var(--tg-theme-bg-color, #1a1a2e) !important;
     color: var(--tg-theme-text-color, #e0e0e0) !important;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
+    #app-content { transition: opacity 0.15s ease-in-out; }
+    #app-content.page-loading { opacity: 0.3; pointer-events: none; }
 
-    #app-content {
-    transition: opacity 0.15s ease-in-out;
-    }
-    #app-content.page-loading {
-    opacity: 0.3;
-    pointer-events: none;
-    }
-
-    /* ========== Glassmorphism ========== */
     .glass-card {
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(12px);
@@ -84,7 +96,6 @@
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 16px !important;
     }
-
     .glass-input {
     background: rgba(255, 255, 255, 0.08) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -99,18 +110,6 @@
     outline: none;
     }
 
-    .btn-glass {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: inherit;
-    transition: all 0.2s;
-    }
-    .btn-glass:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    /* ========== Kartu Catatan ========== */
     .note-card {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -124,60 +123,132 @@
     border-color: rgba(255, 193, 7, 0.4);
     }
 
-    /* ========== Bottom Nav ========== */
-    .nav-link {
-    color: var(--tg-theme-hint-color, #a0a0a0);
-    transition: color 0.2s, transform 0.15s;
-    }
-    .nav-link.active-link, .nav-link.text-warning {
-    color: var(--tg-theme-button-color, #ffc107) !important;
-    transform: scale(1.05);
-    }
-    .nav-link:active {
-    transform: scale(0.95);
-    }
+    .nav-link { color: var(--tg-theme-hint-color, #a0a0a0); transition: color 0.2s, transform 0.15s; }
+    .nav-link.active-link, .nav-link.text-warning { color: var(--tg-theme-button-color, #ffc107) !important; transform: scale(1.05); }
+    .nav-link:active { transform: scale(0.95); }
 
-    /* Tombol tengah */
     .create-fab {
     background: linear-gradient(135deg, #ffc107, #ff9800);
-    border: none;
-    color: #1a1a2e;
+    border: none; color: #1a1a2e;
     box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
     transition: transform 0.2s, box-shadow 0.2s;
     }
-    .create-fab:active {
-    transform: scale(0.9);
-    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.5);
-    }
+    .create-fab:active { transform: scale(0.9); box-shadow: 0 2px 8px rgba(255, 193, 7, 0.5); }
 
-    /* ========== Empty State ========== */
     .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem 1rem;
-    text-align: center;
-    color: var(--tg-theme-hint-color, #a0a0a0);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 3rem 1rem; text-align: center; color: var(--tg-theme-hint-color, #a0a0a0);
     }
-    .empty-state i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
+    .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+
+    .profile-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1rem; font-size: 2rem;
+    border: 2px solid rgba(255,255,255,0.2);
     }
 
-    /* ========== Profil ========== */
-    .profile-avatar {
-    width: 80px;
-    height: 80px;
+    /* Quill customization */
+    .ql-toolbar.ql-snow {
+    background: var(--tg-theme-secondary-bg-color, rgba(255,255,255,0.08));
+    border-color: var(--tg-theme-section-separator-color, rgba(255,255,255,0.15)) !important;
+    border-radius: 12px 12px 0 0;
+    }
+    .ql-container.ql-snow {
+    border-color: var(--tg-theme-section-separator-color, rgba(255,255,255,0.15)) !important;
+    border-radius: 0 0 12px 12px;
+    background: var(--tg-theme-bg-color, rgba(0,0,0,0.3));
+    color: var(--tg-theme-text-color, #e0e0e0);
+    }
+    .ql-editor {
+    color: var(--tg-theme-text-color, #e0e0e0);
+    font-family: inherit;
+    min-height: 300px;
+    }
+    .ql-editor.ql-blank::before {
+    color: var(--tg-theme-hint-color, rgba(255,255,255,0.5));
+    }
+
+    /* Ikon toolbar */
+    .ql-snow .ql-stroke {
+    stroke: var(--tg-theme-text-color, #e0e0e0);
+    }
+    .ql-snow .ql-fill {
+    fill: var(--tg-theme-text-color, #e0e0e0);
+    }
+    .ql-snow .ql-picker {
+    color: var(--tg-theme-text-color, #e0e0e0);
+    }
+
+    /* Dropdown / picker options */
+    .ql-snow .ql-picker-options {
+    background-color: var(--tg-theme-secondary-bg-color, #2a2a2a);
+    border-color: var(--tg-theme-section-separator-color, rgba(255,255,255,0.2));
+    color: var(--tg-theme-text-color, #e0e0e0);
+    }
+    .ql-snow .ql-picker-options .ql-picker-item {
+    color: var(--tg-theme-text-color, #e0e0e0);
+    }
+    .ql-snow .ql-picker-options .ql-picker-item:hover {
+    background-color: var(--tg-theme-button-color, rgba(255,193,7,0.3));
+    color: var(--tg-theme-button-text-color, #000);
+    }
+
+    /* Tooltip (link editor) */
+    .ql-snow .ql-tooltip {
+    background-color: var(--tg-theme-secondary-bg-color, #2a2a2a);
+    border-color: var(--tg-theme-section-separator-color, rgba(255,255,255,0.2));
+    color: var(--tg-theme-text-color, #e0e0e0);
+    }
+    .ql-snow .ql-tooltip input[type=text] {
+    background: var(--tg-theme-bg-color, #1a1a2e);
+    color: var(--tg-theme-text-color, #e0e0e0);
+    border: 1px solid var(--tg-theme-section-separator-color, rgba(255,255,255,0.3));
+    }
+
+    /* Active state pada toolbar */
+    .ql-snow .ql-picker.ql-expanded .ql-picker-label,
+    .ql-snow .ql-picker.ql-expanded .ql-picker-options {
+    border-color: var(--tg-theme-section-separator-color, rgba(255,255,255,0.3));
+    }
+    .ql-snow.ql-toolbar button:hover,
+    .ql-snow.ql-toolbar button:focus,
+    .ql-snow.ql-toolbar button.ql-active {
+    color: var(--tg-theme-button-color, #ffc107);
+    }
+    .ql-snow.ql-toolbar button:hover .ql-stroke,
+    .ql-snow.ql-toolbar button:focus .ql-stroke,
+    .ql-snow.ql-toolbar button.ql-active .ql-stroke {
+    stroke: var(--tg-theme-button-color, #ffc107);
+    }
+    .ql-snow.ql-toolbar button:hover .ql-fill,
+    .ql-snow.ql-toolbar button:focus .ql-fill,
+    .ql-snow.ql-toolbar button.ql-active .ql-fill {
+    fill: var(--tg-theme-button-color, #ffc107);
+    }
+    .vc-date__btn { position: relative; }
+    /* Titik kecil default untuk catatan */
+    .vc-date__btn.has-notes::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px; height: 5px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-    font-size: 2rem;
-    border: 2px solid rgba(255,255,255,0.2);
+    background: #ffc107; /* kuning */
+    pointer-events: none;
+    }
+    /* Jika ada pengingat, warna titik berubah menjadi oranye/merah */
+    .vc-date__btn.has-reminder::after {
+    background: #ff6b6b; /* merah */
+    width: 6px; height: 6px;
+    }
+    /* Jika ada keduanya (catatan + pengingat), tampilkan titik dengan border */
+    .vc-date__btn.has-notes.has-reminder::after {
+    background: #ffc107;
+    box-shadow: 0 0 0 2px #ff6b6b;
     }
     </style>
     @endpush

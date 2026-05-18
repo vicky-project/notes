@@ -7,9 +7,11 @@ class Tag extends Model
 {
   protected $table = 'notes_tags';
 
-  protected $fillable = ['telegram_user_id',
+  protected $fillable = [
+    'telegram_user_id',
     'name',
-    'color'];
+    'color'
+  ];
 
   public function notes() {
     return $this->belongsToMany(Note::class, 'note_tag');

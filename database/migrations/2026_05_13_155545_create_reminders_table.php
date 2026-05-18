@@ -16,6 +16,7 @@ return new class extends Migration
       $table->foreignId('note_id')->constrained('notes')->onDelete('cascade');
       $table->timestamp('remind_at');
       $table->boolean('is_completed')->default(false);
+        $table->timestamp('notified_at')->nullable();
         $table->timestamps();
       });
     }
