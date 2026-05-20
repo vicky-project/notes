@@ -285,7 +285,6 @@
       type: 'default',
       selectedDate: selectedDate,
       firstDayOfWeek: 0,
-      locale: 'id-ID',
       settings: {
         visibility: {
           daysOutsideMonth: true
