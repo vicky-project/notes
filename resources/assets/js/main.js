@@ -684,7 +684,7 @@
             tgApp.showToast(res.message || 'Gagal mengirim', 'danger');
           }
         } catch (err) {
-          tgApp.showToast('Gagal mengirim ICS', 'danger');
+          tgApp.showToast(err.message || 'Gagal mengirim ICS', 'danger');
         } finally {
           tgApp.hideLoading();
         }

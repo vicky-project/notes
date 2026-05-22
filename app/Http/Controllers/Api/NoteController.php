@@ -129,7 +129,10 @@ class NoteController extends Controller
         $caption = "📅 Semua catatan Anda dalam format ICS.\nBisa diimpor ke Google Calendar, Apple Calendar, dll.";
       }
     } catch(\RuntimeException $e) {
-      return response()->json(['message' => $e->getMessage()], 400);
+      return response()->json([
+        'success' => false,
+        'message' => $e->getMessage()
+      ], 400);
     }
 
     $tempPath = Storage::disk('local')->path('temp/' . $filename);
