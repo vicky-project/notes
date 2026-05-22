@@ -16,7 +16,8 @@
   "require": {
     "php": "^8.2",
     "joshbrw/laravel-module-installer": "^1.0",
-    "vicky-project/telegram-module": "^1.0"
+    "spatie/icalendar-generator": "^3.3",
+    "vicky-project/telegram-module": "^1.1"
   },
   "autoload": {
     "psr-4": {

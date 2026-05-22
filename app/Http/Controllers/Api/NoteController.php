@@ -3,11 +3,15 @@ namespace Modules\Notes\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Storage;
 use Modules\Notes\Http\Requests\StoreNoteRequest;
 use Modules\Notes\Http\Requests\UpdateNoteRequest;
 use Modules\Notes\Http\Resources\NoteResource;
 use Modules\Notes\Services\NoteService;
-use Illuminate\Routing\Controller;
+use Modules\Notes\Services\IcsExportService;
+use Modules\Telegram\Services\Support\TelegramApi;
+use Modules\Telegram\Services\Support\TelegramMarkdownHelper;
 
 class NoteController extends Controller
 {
@@ -103,5 +107,52 @@ class NoteController extends Controller
     $dates = $this->noteService->getNoteDates($request->user()->id);
 
     return response()->json($dates);
+  }
+
+  public function sendIcsToTelegram(Request $request, IcsExportService $icsService, TelegramApi $telegramApi) {
+    $user = $request->user();
+    $chatId = $user->telegram_id ?? $user->id;
+
+    if (empty($chatId)) {
+      return response()->json(['message' => 'Telegram chat ID tidak ditemukan.'], 400);
+    }
+
+    try {
+      if ($request->has('id')) {
+        $note = $this->noteService->getNote($request->id, $user->id);
+        $content = $icsService->generateForNote($note);
+        $filename = 'catatan-' . $note->id . '.ics';
+        $caption = "📅 Catatan: {$note->title}";
+      } else {
+        $content = $icsService->generateForUser($user->id);
+        $filename = 'semua-catatan-' . now()->format('Ymd_His') . '.ics';
+        $caption = "📅 Semua catatan Anda dalam format ICS.\nBisa diimpor ke Google Calendar, Apple Calendar, dll.";
+      }
+    } catch(\RuntimeException $e) {
+      return response()->json([
+        'success' => false,
+        'message' => $e->getMessage()
+      ], 400);
+    }
+
+    $tempPath = Storage::disk('local')->path('temp/' . $filename);
+    file_put_contents($tempPath, $content);
+
+    $result = $telegramApi->sendDocument(
+      chatId: $chatId,
+      filePath: $tempPath,
+      caption: TelegramMarkdownHelper::safeText($caption, 'MarkdownV2'),
+      parseMode: 'MarkdownV2'
+    );
+
+    if (file_exists($tempPath)) {
+      unlink($tempPath);
+    }
+
+    if ($result) {
+      return response()->json(['success' => true, 'message' => 'File ICS dikirim ke Telegram Anda.']);
+    } else {
+      return response()->json(['message' => 'Gagal mengirim file ke Telegram.'], 500);
+    }
   }
 }

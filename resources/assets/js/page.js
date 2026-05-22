@@ -178,6 +178,7 @@
       <a href="#/notes/${note.id}/edit" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> Edit</a>
       <button data-delete-note="${note.id}" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> Hapus</button>
       ${state.aiEnabled && note.content?.length > 100 ? `<button id="summarize-btn" class="btn btn-outline-warning btn-sm"><i class="bi bi-stars me-1"></i> Ringkas AI</button>`: ''}
+      <button id="send-ics-btn" class="btn btn-sm btn-outline-light"><i class="bi bi-send"></i> Kirim ICS</button>
       </div>
       <!-- Quick Reminder -->
       <div class="mt-3 pt-3 border-top border-secondary">
@@ -442,6 +443,7 @@
       </div>
       </div>
       <a href="#/notes/trash" class="btn btn-outline-light mt-2 w-100"><i class="bi bi-trash"></i> Trash</a>
+      <button id="send-all-ics-btn" class="btn btn-outline-light mt-2 w-100"><i class="bi bi-send"></i> Kirim ICS ke Telegram (Semua)</button>
       <button id="logout-btn" class="btn btn-danger mt-2 w-100"><i class="bi bi-box-arrow-right"></i> Logout</button>
       `;
     },

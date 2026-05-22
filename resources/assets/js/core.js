@@ -108,6 +108,15 @@
     async getDatesWithNotes() {
       return tgApp.fetchWithAuth(BASE_URL + '/api/notes/dates-with-notes');
     },
+    async sendIcsToTelegram(noteId = null) {
+      const body = noteId ? {
+        id: noteId
+      }: {};
+      return tgApp.fetchWithAuth(BASE_URL + '/api/notes/send-ics', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+    }
   };
 
   const helpers = {
