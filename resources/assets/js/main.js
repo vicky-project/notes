@@ -672,6 +672,46 @@
         return;
       }
 
+      // Kirim ICS semua catatan
+      if (e.target.id === 'send-all-ics-btn') {
+        e.preventDefault();
+        tgApp.showLoading('Mengirim...');
+        try {
+          const res = await api.sendIcsToTelegram();
+          if (res.success) {
+            tgApp.showToast('File ICS dikirim ke Telegram Anda.', 'success');
+          } else {
+            tgApp.showToast(res.message || 'Gagal mengirim', 'danger');
+          }
+        } catch (err) {
+          tgApp.showToast('Gagal mengirim ICS', 'danger');
+        } finally {
+          tgApp.hideLoading();
+        }
+        return;
+      }
+
+      // Kirim ICS satu catatan
+      if (e.target.id === 'send-ics-btn' || e.target.closest('#send-ics-btn')) {
+        e.preventDefault();
+        const note = state.currentNote;
+        if (!note) return;
+        tgApp.showLoading('Mengirim...');
+        try {
+          const res = await api.sendIcsToTelegram(note.id);
+          if (res.success) {
+            tgApp.showToast('File ICS dikirim ke Telegram Anda.', 'success');
+          } else {
+            tgApp.showToast(res.message || 'Gagal mengirim', 'danger');
+          }
+        } catch (err) {
+          tgApp.showToast('Gagal mengirim ICS', 'danger');
+        } finally {
+          tgApp.hideLoading();
+        }
+        return;
+      }
+
       // AI
       if (state.aiEnabled) {
         if (e.target.id === 'ai-search-btn' || e.target.closest('#ai-search-btn')) {

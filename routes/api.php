@@ -18,6 +18,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('profile', [ProfileController::class, 'show']);
     Route::get('dates-with-notes', [NoteController::class, 'datesWithNotes']);
     Route::get('trashed', [NoteController::class, 'trashed']);
+    Route::post('send-ics', [NoteController::class, 'sendIcsToTelegram']);
     Route::patch('{id}/restore', [NoteController::class, 'restore']);
     Route::delete('{id}/force', [NoteController::class, 'forceDelete']);
   });
