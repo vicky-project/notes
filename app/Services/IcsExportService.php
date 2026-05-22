@@ -43,7 +43,7 @@ class IcsExportService
       $dtend = (clone $dtstart)->modify('+1 hour');
 
       $event = Event::create($note->title)
-      ->uid($uid)
+      ->uniqueIdentifier($uid)
       ->startsAt($dtstart)
       ->endsAt($dtend);
 
@@ -60,9 +60,9 @@ class IcsExportService
       $description = "Checklist: {$completed}/{$total} selesai\n" . strip_tags($note->content ?? '');
 
       $todo = Todo::create($note->title)
-      ->uid($uid)
+      ->uniqueIdentifier($uid)
       ->description($description)
-      ->percentCompleted($total > 0 ? (int) round(($completed / $total) * 100) : 0);
+      ->percentComplete($total > 0 ? (int) round(($completed / $total) * 100) : 0);
 
       if ($completed === $total) {
         $todo->status(TodoStatus::completed());
@@ -76,7 +76,7 @@ class IcsExportService
       $dtstart = new DateTime($note->created_at->toIso8601String());
 
       $event = Event::create($note->title)
-      ->uid($uid)
+      ->uniqueIdentifier($uid)
       ->startsAt($dtstart)
       ->description(strip_tags($note->content ?? ''));
 
