@@ -117,15 +117,19 @@ class NoteController extends Controller
       return response()->json(['message' => 'Telegram chat ID tidak ditemukan.'], 400);
     }
 
-    if ($request->has('id')) {
-      $note = $this->noteService->getNote($request->id, $user->id);
-      $content = $icsService->generateForNote($note);
-      $filename = 'catatan-' . $note->id . '.ics';
-      $caption = "📅 Catatan: {$note->title}";
-    } else {
-      $content = $icsService->generateForUser($user->id);
-      $filename = 'semua-catatan-' . now()->format('Ymd_His') . '.ics';
-      $caption = "📅 Semua catatan Anda dalam format ICS.\nBisa diimpor ke Google Calendar, Apple Calendar, dll.";
+    try {
+      if ($request->has('id')) {
+        $note = $this->noteService->getNote($request->id, $user->id);
+        $content = $icsService->generateForNote($note);
+        $filename = 'catatan-' . $note->id . '.ics';
+        $caption = "📅 Catatan: {$note->title}";
+      } else {
+        $content = $icsService->generateForUser($user->id);
+        $filename = 'semua-catatan-' . now()->format('Ymd_His') . '.ics';
+        $caption = "📅 Semua catatan Anda dalam format ICS.\nBisa diimpor ke Google Calendar, Apple Calendar, dll.";
+      }
+    } catch(\RuntimeException $e) {
+      return response()->json(['message' => $e->getMessage()], 400);
     }
 
     $tempPath = Storage::disk('local')->path('temp/' . $filename);

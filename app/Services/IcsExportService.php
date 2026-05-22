@@ -24,6 +24,10 @@ class IcsExportService
     ->with('reminder')
     ->get();
 
+    if ($notes->isEmpty()) {
+      throw new \RuntimeException('Tidak ada catatan untuk diekspor.');
+    }
+
     $calendar = Calendar::create('Notes Export');
 
     foreach ($notes as $note) {
