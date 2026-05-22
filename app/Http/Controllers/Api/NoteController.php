@@ -11,6 +11,7 @@ use Modules\Notes\Http\Resources\NoteResource;
 use Modules\Notes\Services\NoteService;
 use Modules\Notes\Services\IcsExportService;
 use Modules\Telegram\Services\Support\TelegramApi;
+use Modules\Telegram\Services\Support\TelegramMarkdownHelper;
 
 class NoteController extends Controller
 {
@@ -133,7 +134,7 @@ class NoteController extends Controller
     $result = $telegramApi->sendDocument(
       chatId: $chatId,
       filePath: $tempPath,
-      caption: $caption,
+      caption: TelegramMarkdownHelper::safeText($caption, 'MarkdownV2'),
       parseMode: 'MarkdownV2'
     );
 
