@@ -539,6 +539,14 @@
         return;
       }
 
+      // Remove tag
+      const removeBtn = e.target.closest('[data-remove-tag]');
+      if (removeBtn) {
+        e.preventDefault();
+        removeTag(removeBtn.dataset.removeTag);
+        return;
+      }
+
       const addExistingTag = e.target.closest('.add-existing-tag');
       if (addExistingTag) {
         addTag(addExistingTag.dataset.tagName); return;
