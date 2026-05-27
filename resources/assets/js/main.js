@@ -126,10 +126,25 @@
       </span>`).join('');
   }
 
+  function renderAvailableTags() {
+    const container = document.getElementById('available-tags-list');
+    if (!container) return;
+    const selectedTags = getTagsFromHidden();
+    const available = state.allTags.filter(t => !selectedTags.includes(t.name));
+    container.innerHTML = available.map(tag => `
+      <span class="badge bg-dark border border-secondary add-existing-tag" data-tag-name="${helpers.escapeHtml(tag.name)}" style="cursor:pointer;">
+      ${helpers.escapeHtml(tag.name)}
+      </span>
+      `).join('');
+  }
+
   function addTag(name) {
     const tags = getTagsFromHidden();
     if (!tags.includes(name)) {
-      tags.push(name); setTagsToHidden(tags); renderTagChips();
+      tags.push(name);
+      setTagsToHidden(tags);
+      renderTagChips();
+      renderAvailableTags();
     }
   }
 
@@ -137,6 +152,7 @@
     let tags = getTagsFromHidden().filter(t => t !== name);
     setTagsToHidden(tags);
     renderTagChips();
+    renderAvailableTags();
   }
 
   function commitPendingTag() {
@@ -258,13 +274,13 @@
       };
       popups[date].modifier = 'has-notes';
   });
-  (datesWithReminders || []).forEach(datw => {
+  (datesWithReminders || []).forEach(date => {
     if (!popups[date]) popups[date] = {
       modifier: '',
       html: ''
     };
-    popups[date].modifier += 'has-reminder';
-  })
+    popups[date].modifier += ' has-reminder';
+  });
   calendar.popups = popups;
   calendar.update({
     dates: true
@@ -392,6 +408,7 @@
         updateActiveNav(parsed.full);
         if (parsed.full === '/notes/create' || parsed.isEdit) {
           renderTagChips();
+          renderAvailableTags();
           const typeSelect = document.getElementById('note-type-select');
           initFormByType(typeSelect?.value || 'text');
         } else if (parsed.full === '/notes/all') {
@@ -464,7 +481,6 @@
   // ---------- Events ----------
   function setupGlobalEvents() {
     document.body.addEventListener('click', async (e) => {
-      // Navigasi internal link
       const anchor = e.target.closest('a');
       if (anchor?.getAttribute('href')?.startsWith('#')) {
         e.preventDefault();
@@ -472,7 +488,6 @@
         return;
       }
 
-      // Delete note
       const deleteBtn = e.target.closest('[data-delete-note]');
       if (deleteBtn) {
         const id = deleteBtn.dataset.deleteNote;
@@ -492,7 +507,6 @@
         return;
       }
 
-      // Complete reminder
       const completeBtn = e.target.closest('[data-complete-reminder]');
       if (completeBtn) {
         const id = completeBtn.dataset.completeReminder;
@@ -508,7 +522,6 @@
         return;
       }
 
-      // Delete reminder
       const deleteReminderBtn = e.target.closest('[data-delete-reminder]');
       if (deleteReminderBtn) {
         const id = deleteReminderBtn.dataset.deleteReminder;
@@ -526,13 +539,11 @@
         return;
       }
 
-      // Tambah tag yang sudah ada
       const addExistingTag = e.target.closest('.add-existing-tag');
       if (addExistingTag) {
         addTag(addExistingTag.dataset.tagName); return;
       }
 
-      // Quick reminder
       if (e.target.id === 'quick-reminder-btn') {
         const formEl = document.getElementById('quick-reminder-form');
         if (formEl) formEl.style.display = formEl.style.display === 'none' ? 'block': 'none';
@@ -581,7 +592,6 @@
         return;
       }
 
-      // Checklist
       if (e.target.id === 'add-checklist-btn') {
         const input = document.getElementById('checklist-input');
         if (input) {
@@ -634,7 +644,6 @@
         return;
       }
 
-      // Restore
       const restoreBtn = e.target.closest('[data-restore-note]');
       if (restoreBtn) {
         try {
@@ -646,7 +655,6 @@
         return;
       }
 
-      // Force delete
       const forceDeleteBtn = e.target.closest('[data-force-delete-note]');
       if (forceDeleteBtn && confirm('Hapus permanen?')) {
         try {
@@ -667,31 +675,26 @@
 
       if (e.target.classList.contains('quick-reminder-daily') || e.target.closest('.quick-reminder-daily')) {
         const noteId = e.target.dataset.noteId || e.target.closest('.quick-reminder-daily').dataset.noteId;
-        // Arahkan ke detail catatan untuk mengatur pengingat
         window.location.hash = `#/notes/${noteId}`;
         return;
       }
 
-      // Kirim ICS semua catatan
       if (e.target.id === 'send-all-ics-btn') {
         e.preventDefault();
         tgApp.showLoading('Mengirim...');
         try {
           const res = await api.sendIcsToTelegram();
-          if (res.success) {
-            tgApp.showToast('File ICS dikirim ke Telegram Anda.', 'success');
-          } else {
-            tgApp.showToast(res.message || 'Gagal mengirim', 'danger');
-          }
+          if (res.success) tgApp.showToast('File ICS dikirim ke Telegram Anda.', 'success');
+          else tgApp.showToast(res.message || 'Gagal mengirim', 'danger');
         } catch (err) {
           tgApp.showToast(err.message || 'Gagal mengirim ICS', 'danger');
-        } finally {
+        }
+        finally {
           tgApp.hideLoading();
         }
         return;
       }
 
-      // Kirim ICS satu catatan
       if (e.target.id === 'send-ics-btn' || e.target.closest('#send-ics-btn')) {
         e.preventDefault();
         const note = state.currentNote;
@@ -699,20 +702,17 @@
         tgApp.showLoading('Mengirim...');
         try {
           const res = await api.sendIcsToTelegram(note.id);
-          if (res.success) {
-            tgApp.showToast('File ICS dikirim ke Telegram Anda.', 'success');
-          } else {
-            tgApp.showToast(res.message || 'Gagal mengirim', 'danger');
-          }
+          if (res.success) tgApp.showToast('File ICS dikirim ke Telegram Anda.', 'success');
+          else tgApp.showToast(res.message || 'Gagal mengirim', 'danger');
         } catch (err) {
           tgApp.showToast(err.message || 'Gagal mengirim ICS', 'danger');
-        } finally {
+        }
+        finally {
           tgApp.hideLoading();
         }
         return;
       }
 
-      // AI
       if (state.aiEnabled) {
         if (e.target.id === 'ai-search-btn' || e.target.closest('#ai-search-btn')) {
           const query = document.getElementById('search-notes')?.value.trim();

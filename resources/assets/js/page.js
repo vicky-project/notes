@@ -281,10 +281,9 @@
       <input type="hidden" name="tags" value='${JSON.stringify(tagNames)}'>
 
       <!-- Tag yang Sudah Ada -->
-      ${state.allTags.length > 0 ? `
-      <div class="mt-2">
+      <div class="mt-2" id="available-tags-container">
       <small class="text-muted">Tag yang sudah ada (klik untuk menambah):</small>
-      <div class="d-flex flex-wrap gap-1 mt-1">
+      <div class="d-flex flex-wrap gap-1 mt-1" id="available-tags-list">
       ${state.allTags.filter(t => !tagNames.includes(t.name)).map(tag => `
         <span class="badge bg-dark border border-secondary add-existing-tag" data-tag-name="${helpers.escapeHtml(tag.name)}" style="cursor:pointer;">
         ${helpers.escapeHtml(tag.name)}
@@ -292,7 +291,6 @@
         `).join('')}
       </div>
       </div>
-      `: ''}
       </div>
 
       <div class="mb-3">
@@ -309,13 +307,12 @@
       const allReminders = state.reminders || [];
       const now = new Date();
 
-      // Fungsi untuk menentukan prioritas pengurutan
       const getPriority = (r) => {
-        if (r.is_completed) return 3; // selesai -> paling bawah
+        if (r.is_completed) return 3;
         const remindDate = new Date(r.remind_at);
-        if (remindDate > now && !r.notified_at) return 0; // akan datang & belum dinotifikasi -> paling atas
-        if (r.notified_at && !r.is_completed) return 1; // sudah dinotifikasi, belum selesai -> tengah
-        return 2; // lewat waktu tapi belum selesai
+        if (remindDate > now && !r.notified_at) return 0;
+        if (r.notified_at && !r.is_completed) return 1;
+        return 2;
       };
 
       const sorted = [...allReminders].sort((a, b) => {

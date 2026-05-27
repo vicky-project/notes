@@ -47,14 +47,12 @@
     },
     async createNote(data) {
       return tgApp.fetchWithAuth(BASE_URL + '/api/notes', {
-        method: 'POST',
-        body: JSON.stringify(data)
+        method: 'POST', body: JSON.stringify(data)
       });
     },
     async updateNote(id, data) {
       return tgApp.fetchWithAuth(BASE_URL + `/api/notes/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
+        method: 'PUT', body: JSON.stringify(data)
       });
     },
     async deleteNote(id) {
@@ -113,8 +111,7 @@
         id: noteId
       }: {};
       return tgApp.fetchWithAuth(BASE_URL + '/api/notes/send-ics', {
-        method: 'POST',
-        body: JSON.stringify(body)
+        method: 'POST', body: JSON.stringify(body)
       });
     }
   };
