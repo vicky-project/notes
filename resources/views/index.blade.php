@@ -60,10 +60,6 @@
 @endsection
 
 @push('scripts')
-<script src="//cdn.jsdelivr.net/npm/eruda"></script>
-<script>
-  eruda.init();
-</script>
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/index.js" defer></script>
 <script>
