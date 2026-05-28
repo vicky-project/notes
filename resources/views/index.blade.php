@@ -1,331 +1,250 @@
 @extends('telegram::layouts.mini-app')
 
-@section('title', 'Shift Generator')
+@section('title', 'Notes')
 
 @section('content')
-<div id="app-shell" class="d-flex flex-column min-vh-100">
-  <div id="app-header" class="px-3 py-2 d-flex align-items-center border-bottom" style="background: var(--tg-theme-secondary-bg-color);">
-    <button id="btn-back" class="btn btn-sm btn-outline-secondary me-2 d-none" onclick="window.goToPage('employees')">
-      <i class="bi bi-arrow-left"></i>
-    </button>
-    <h5 id="app-title" class="mb-0">Shift Generator</h5>
-  </div>
-  <div id="app-content" class="flex-fill" style="padding-bottom: 70px !important; margin-bottom: 70px;">
-    <!-- Konten akan di-render oleh JavaScript -->
-  </div>
-  <div id="app-tabbar" class="border-top py-2 d-flex justify-content-around fixed-bottom" style="background: var(--tg-theme-secondary-bg-color); z-index: 1030;">
-    <button class="btn btn-link text-decoration-none text-center nav-link" data-nav="employees" data-route="employees">
-      <i class="bi bi-people fs-5"></i><br><small>Karyawan</small>
-    </button>
-    <button class="btn btn-link text-decoration-none text-center nav-link" data-nav="generate" data-route="generate">
-      <i class="bi bi-calendar-check fs-5"></i><br><small>Generate</small>
-    </button>
+<div id="app-content" class="p-3 pb-5 mb-5">
+  <!-- Loading Overlay Awal -->
+  <div id="initial-loading" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    color: white;
+    font-family: sans-serif;
+    transition: opacity 0.3s ease;">
+
+    <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+    <h5>Memuat Aplikasi...</h5>
   </div>
 </div>
 
-<!-- Modal Informasi Global -->
-<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background: var(--tg-theme-secondary-bg-color); color: var(--tg-theme-text-color);">
-      <div class="modal-header" style="border-bottom: 1px solid var(--tg-theme-section-separator-color);">
-        <h6 class="modal-title" id="infoModalLabel">Informasi</h6>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(0.5);"></button>
-      </div>
-      <div class="modal-body" id="infoModalBody">
-        <!-- Konten akan diisi dinamis -->
-      </div>
-      <div class="modal-footer" style="border-top: 1px solid var(--tg-theme-section-separator-color);">
-        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
-      </div>
-    </div>
+{{-- Bottom Navigation --}}
+<nav class="fixed-bottom bg-dark bg-opacity-75 backdrop-blur border-top border-secondary">
+  <div class="d-flex justify-content-around align-items-center py-2">
+    <a href="#/notes/home" class="nav-link text-decoration-none text-center" data-route="/notes/home">
+      <i class="bi bi-house-door fs-5 d-block"></i>
+      <small>Beranda</small>
+    </a>
+    <a href="#/notes/all" class="nav-link text-decoration-none text-center" data-route="/notes/all">
+      <i class="bi bi-journals fs-5 d-block"></i>
+      <small>Catatan</small>
+    </a>
+    {{-- Tombol + besar di tengah --}}
+    <a href="#/notes/create" class="btn btn-warning rounded-circle shadow-lg d-flex align-items-center justify-content-center"
+      style="width: 60px; height: 60px; margin-top: -30px; z-index: 10;">
+      <i class="bi bi-plus-lg fs-2"></i>
+    </a>
+    <a href="#/notes/daily" class="nav-link text-decoration-none text-center" data-route="/notes/daily">
+      <i class="bi bi-calendar3 fs-5 d-block"></i>
+      <small>Daily</small>
+    </a>
+    <a href="#/notes/reminders" class="nav-link text-decoration-none text-center" data-route="/notes/reminders">
+      <i class="bi bi-bell fs-5 d-block"></i>
+      <small>Pengingat</small>
+    </a>
+    <a href="#/notes/profile" class="nav-link text-decoration-none text-center" data-route="/notes/profile">
+      <i class="bi bi-person-circle fs-5 d-block"></i>
+      <small>Profil</small>
+    </a>
   </div>
-</div>
+</nav>
 @endsection
 
 @push('scripts')
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/index.js" defer></script>
 <script>
-  window.API_BASE = '{{ rtrim(config("app.url"), "/") }}';
+  const BASE_URL = '{{ rtrim(config("app.url"), "/") }}';
+  window.NotesConfig = {
+    aiEnabled: {{ $aiEnabled ? 'true' : 'false'}}
+  };
+  {!! file_get_contents(module_path('notes', 'resources/assets/js/core.js')); !!}
+  {!! file_get_contents(module_path('notes', 'resources/assets/js/page.js')); !!}
+  {!! file_get_contents(module_path('notes', 'resources/assets/js/main.js')); !!}
 </script>
-<script src="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/index.js"></script>
-<script src="{{ secure_url(rtrim(config("app.url"), "/") .'/apps/shift/js/core.js') }}"></script>
-<script src="{{ secure_url(rtrim(config("app.url"), "/") .'/apps/shift/js/page.js') }}"></script>
-<script src="{{ secure_url(rtrim(config("app.url"), "/") .'/apps/shift/js/main.js') }}"></script>
 @endpush
 
 @push('styles')
-<!-- Vanilla Calendar Pro CSS -->
 <link href="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/styles/index.css" rel="stylesheet">
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 <style>
-:root {
-  --bg-deep: #0F172A;
-  --bg-surface: #1E293B;
-  --accent-teal: #2DD4BF;
-  --accent-coral: #FB7185;
-  --accent-gold: #FBBF24;
-  --text-main: #F1F5F9;
-  --text-muted: #94A3B8;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-  body, #app-shell {
-    background: linear-gradient(150deg, #0F172A 0%, #1E293B 40%, #0F172A 100%) !important;
-    color: var(--text-main) !important;
+  body {
+    background-color: var(--tg-theme-bg-color, #1a1a2e) !important;
+    color: var(--tg-theme-text-color, #e0e0e0) !important;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    min-height: 100vh;
     }
+    #app-content { transition: opacity 0.15s ease-in-out; }
+    #app-content.page-loading { opacity: 0.3; pointer-events: none; }
 
-    /* Header */
-    #app-header {
-    background: rgba(15, 23, 42, 0.8) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border-subtle);
-    }
-
-    /* Tab Bar */
-    #app-tabbar {
-    background: rgba(15, 23, 42, 0.85) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid var(--border-subtle);
-    }
-    #app-tabbar .nav-link {
-    color: var(--text-muted) !important;
-    transition: all 0.3s ease;
-    border-radius: 14px;
-    padding: 0.4rem 1.2rem;
-    margin: 0 0.2rem;
-    }
-    #app-tabbar .nav-link.active {
-    color: #FFFFFF !important;
-    font-weight: 600;
-    background: linear-gradient(135deg, rgba(45, 212, 191, 0.25), rgba(251, 113, 133, 0.15)) !important;
-    box-shadow: 0 2px 15px rgba(45, 212, 191, 0.2);
-    }
-
-    /* Kartu */
-    .card {
-    background: rgba(255, 255, 255, 0.03);
+    .glass-card {
+    background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border-subtle);
-    border-radius: 18px;
-    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
     }
-    .card:hover {
+    .glass-input {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: var(--tg-theme-text-color, #e0e0e0) !important;
+    border-radius: 12px !important;
+    padding: 0.75rem 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .glass-input:focus {
+    border-color: var(--tg-theme-button-color, #ffc107) !important;
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2) !important;
+    outline: none;
+    }
+
+    .note-card {
     background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(45, 212, 191, 0.25);
-    box-shadow: var(--shadow-card);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    overflow: hidden;
+    }
+    .note-card:hover, .note-card:active {
     transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    border-color: rgba(255, 193, 7, 0.4);
     }
 
-    /* Tombol Umum */
-    .btn {
-    border-radius: 12px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    letter-spacing: 0.3px;
+    .nav-link { color: var(--tg-theme-hint-color, #a0a0a0); transition: color 0.2s, transform 0.15s; }
+    .nav-link.active-link, .nav-link.text-warning { color: var(--tg-theme-button-color, #ffc107) !important; transform: scale(1.05); }
+    .nav-link:active { transform: scale(0.95); }
+
+    .create-fab {
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+    border: none; color: #1a1a2e;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
     }
-    .btn-primary {
-    background: linear-gradient(135deg, rgba(45, 212, 191, 0.3), rgba(45, 212, 191, 0.15)) !important;
-    border: 1px solid rgba(45, 212, 191, 0.5) !important;
-    color: #FFFFFF !important;
+    .create-fab:active { transform: scale(0.9); box-shadow: 0 2px 8px rgba(255, 193, 7, 0.5); }
+
+    .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 3rem 1rem; text-align: center; color: var(--tg-theme-hint-color, #a0a0a0);
     }
-    .btn-primary:hover {
-    background: linear-gradient(135deg, rgba(45, 212, 191, 0.5), rgba(45, 212, 191, 0.3)) !important;
-    box-shadow: 0 4px 20px rgba(45, 212, 191, 0.3);
-    }
-    .btn-success {
-    background: linear-gradient(135deg, rgba(45, 212, 191, 0.4), rgba(251, 184, 36, 0.2)) !important;
-    border: 1px solid rgba(251, 184, 36, 0.45) !important;
-    color: #FFFFFF !important;
-    }
-    .btn-success:hover {
-    background: linear-gradient(135deg, rgba(45, 212, 191, 0.6), rgba(251, 184, 36, 0.35)) !important;
-    box-shadow: 0 4px 20px rgba(251, 184, 36, 0.25);
-    }
-    .btn-outline-info {
-    color: #2DD4BF;
-    border-color: rgba(45, 212, 191, 0.5);
-    background: rgba(255,255,255,0.03);
-    backdrop-filter: blur(4px);
-    }
-    .btn-outline-info:hover {
-    background: rgba(45, 212, 191, 0.2);
-    color: #FFFFFF;
-    border-color: rgba(45, 212, 191, 0.8);
-    }
-    .btn-outline-warning {
-    color: #FB7185;
-    border-color: rgba(251, 113, 133, 0.5);
-    background: rgba(255,255,255,0.03);
-    backdrop-filter: blur(4px);
-    }
-    .btn-outline-warning:hover {
-    background: rgba(251, 113, 133, 0.2);
-    color: #FFFFFF;
-    border-color: rgba(251, 113, 133, 0.8);
-    }
-    .btn-outline-danger {
-    color: #FCA5A5;
-    border-color: rgba(252, 165, 165, 0.5);
-    background: rgba(255,255,255,0.03);
-    backdrop-filter: blur(4px);
-    }
-    .btn-outline-danger:hover {
-    background: rgba(252, 165, 165, 0.2);
-    color: #FFFFFF;
-    border-color: rgba(252, 165, 165, 0.8);
+    .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+
+    .profile-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1rem; font-size: 2rem;
+    border: 2px solid rgba(255,255,255,0.2);
     }
 
-    /* Form */
-    .form-control, .form-select {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #FFFFFF;
-    border-radius: 14px;
-    padding: 0.7rem 1rem;
+    /* Quill customization */
+    .ql-toolbar.ql-snow {
+    background: var(--tg-theme-secondary-bg-color, rgba(255,255,255,0.08));
+    border-color: var(--tg-theme-section-separator-color, rgba(255,255,255,0.15)) !important;
+    border-radius: 12px 12px 0 0;
     }
-    .form-control:focus, .form-select:focus {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(45, 212, 191, 0.6);
-    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+    .ql-container.ql-snow {
+    border-color: var(--tg-theme-section-separator-color, rgba(255,255,255,0.15)) !important;
+    border-radius: 0 0 12px 12px;
+    background: var(--tg-theme-bg-color, rgba(0,0,0,0.3));
+    color: var(--tg-theme-text-color, #e0e0e0);
     }
-
-    /* Modal */
-    .modal-content {
-    background: linear-gradient(145deg, #1E293B, #0F172A) !important;
-    border: 1px solid var(--border-subtle);
-    backdrop-filter: blur(24px);
-    border-radius: 20px;
+    .ql-editor {
+    color: var(--tg-theme-text-color, #e0e0e0);
+    font-family: inherit;
+    min-height: 300px;
     }
-
-    /* Kalender (pembungkus) */
-    #calendar-instance {
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(8px);
-    border-radius: 16px;
-    padding: 0.5rem;
+    .ql-editor.ql-blank::before {
+    color: var(--tg-theme-hint-color, rgba(255,255,255,0.5));
     }
 
-    /* Legend dot */
-    #calendar-legend .legend-dot.day {
-    background: linear-gradient(135deg, #2DD4BF, #14B8A6);
+    /* Ikon toolbar */
+    .ql-snow .ql-stroke {
+    stroke: var(--tg-theme-text-color, #e0e0e0);
     }
-    #calendar-legend .legend-dot.night {
-    background: linear-gradient(135deg, #818CF8, #6366F1);
+    .ql-snow .ql-fill {
+    fill: var(--tg-theme-text-color, #e0e0e0);
     }
-    #calendar-legend .legend-dot.off {
-    background: linear-gradient(135deg, #FB7185, #E11D48);
-    }
-    #calendar-legend .legend-dot.leave {
-    background: linear-gradient(135deg, #FBBF24, #F59E0B);
+    .ql-snow .ql-picker {
+    color: var(--tg-theme-text-color, #e0e0e0);
     }
 
-    /* Alert */
-    .alert {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border-subtle);
-    backdrop-filter: blur(8px);
-    border-radius: 14px;
-    color: var(--text-main);
+    /* Dropdown / picker options */
+    .ql-snow .ql-picker-options {
+    background-color: var(--tg-theme-secondary-bg-color, #2a2a2a);
+    border-color: var(--tg-theme-section-separator-color, rgba(255,255,255,0.2));
+    color: var(--tg-theme-text-color, #e0e0e0);
+    }
+    .ql-snow .ql-picker-options .ql-picker-item {
+    color: var(--tg-theme-text-color, #e0e0e0);
+    }
+    .ql-snow .ql-picker-options .ql-picker-item:hover {
+    background-color: var(--tg-theme-button-color, rgba(255,193,7,0.3));
+    color: var(--tg-theme-button-text-color, #000);
     }
 
-    /* Tombol info (ikon ?) */
-    [data-info-title] {
-    color: var(--text-muted);
-    transition: color 0.2s;
+    /* Tooltip (link editor) */
+    .ql-snow .ql-tooltip {
+    background-color: var(--tg-theme-secondary-bg-color, #2a2a2a);
+    border-color: var(--tg-theme-section-separator-color, rgba(255,255,255,0.2));
+    color: var(--tg-theme-text-color, #e0e0e0);
     }
-    [data-info-title]:hover {
-    color: #2DD4BF;
-    }
-
-    /* ========== KALENDER ========== */
-    .vc-date__btn {
-    position: relative;
+    .ql-snow .ql-tooltip input[type=text] {
+    background: var(--tg-theme-bg-color, #1a1a2e);
+    color: var(--tg-theme-text-color, #e0e0e0);
+    border: 1px solid var(--tg-theme-section-separator-color, rgba(255,255,255,0.3));
     }
 
-    /* ---------- LEGENDA ---------- */
-    #calendar-legend {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
+    /* Active state pada toolbar */
+    .ql-snow .ql-picker.ql-expanded .ql-picker-label,
+    .ql-snow .ql-picker.ql-expanded .ql-picker-options {
+    border-color: var(--tg-theme-section-separator-color, rgba(255,255,255,0.3));
     }
-    #calendar-legend .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.85rem;
-    color: var(--text-muted);
+    .ql-snow.ql-toolbar button:hover,
+    .ql-snow.ql-toolbar button:focus,
+    .ql-snow.ql-toolbar button.ql-active {
+    color: var(--tg-theme-button-color, #ffc107);
     }
-    #calendar-legend .legend-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
-    display: inline-block;
+    .ql-snow.ql-toolbar button:hover .ql-stroke,
+    .ql-snow.ql-toolbar button:focus .ql-stroke,
+    .ql-snow.ql-toolbar button.ql-active .ql-stroke {
+    stroke: var(--tg-theme-button-color, #ffc107);
     }
-
-    /* ---------- DOT WARNA SHIFT ---------- */
-    .shift-day .vc-date__btn::after,
-    .shift-night .vc-date__btn::after,
-    .shift-leave .vc-date__btn::after,
-    .shift-off .vc-date__btn::after {
+    .ql-snow.ql-toolbar button:hover .ql-fill,
+    .ql-snow.ql-toolbar button:focus .ql-fill,
+    .ql-snow.ql-toolbar button.ql-active .ql-fill {
+    fill: var(--tg-theme-button-color, #ffc107);
+    }
+    .vc-date__btn { position: relative; }
+    /* Titik kecil default untuk catatan */
+    .vc-date__btn.has-notes::after {
     content: '';
     position: absolute;
     bottom: 3px;
     left: 50%;
     transform: translateX(-50%);
-    width: 6px;
-    height: 6px;
+    width: 5px; height: 5px;
     border-radius: 50%;
+    background: #ffc107; /* kuning */
     pointer-events: none;
     }
-    .shift-day .vc-date__btn::after {
-    background-color: #14B8A6;
-    /* Teal */
+    /* Jika ada pengingat, warna titik berubah menjadi oranye/merah */
+    .vc-date__btn.has-reminder::after {
+    background: #ff6b6b; /* merah */
+    width: 6px; height: 6px;
     }
-    .shift-night .vc-date__btn::after {
-    background-color: #818CF8;
-    /* Indigo */
-    }
-    .shift-off .vc-date__btn::after {
-    background-color: #FB7185;
-    /* Coral */
-    }
-    .shift-leave .vc-date__btn::after {
-    background-color: #FBBF24;
-    /* Emas */
-    }
-
-    /* ---------- WARNA MERAH HANYA UNTUK LIBUR DI BULAN AKTIF ---------- */
-    [data-vc-date-month="current"].shift-holiday .vc-date__btn {
-    color: #FB7185 !important;
-    font-weight: 600;
-    }
-    .shift-holiday .vc-date__btn:hover {
-    color: #fff !important;
-    font-weight: 600;
-    }
-    .shift-holiday[data-vc-date-selected] .vc-date__btn {
-    color: #fff !important;
-    font-weight: 600;
-    }
-
-    /* Tanggal di luar bulan tampil redup, termasuk yang libur */
-    [data-vc-date-month="prev"] .vc-date__btn,
-    [data-vc-date-month="next"] .vc-date__btn {
-    opacity: 0.4;
-    }
-    [data-vc-date-month="prev"] .vc-date__btn::after,
-    [data-vc-date-month="next"] .vc-date__btn::after {
-    opacity: 0.4;
-    }
-
-    /* Text color helper */
-    .text-color {
-    color: var(--tg-theme-text-color) !important;
+    /* Jika ada keduanya (catatan + pengingat), tampilkan titik dengan border */
+    .vc-date__btn.has-notes.has-reminder::after {
+    background: #ffc107;
+    box-shadow: 0 0 0 2px #ff6b6b;
     }
     </style>
     @endpush
