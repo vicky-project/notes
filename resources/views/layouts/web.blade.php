@@ -1,14 +1,11 @@
-<!-- Modules/Notes/Resources/views/web/layouts/app.blade.php -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>@yield('title', 'Notes')</title>
-  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <!-- Quill -->
   <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
   <style>
 :root {
@@ -19,7 +16,6 @@
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    /* Sidebar */
     .sidebar {
       position: fixed;
       top: 0;
@@ -49,7 +45,6 @@
       margin-right: 0.5rem;
     }
 
-    /* Main content */
     .main-content {
       margin-left: var(--sidebar-width);
       padding: 2rem;
@@ -57,7 +52,6 @@
       transition: margin-left 0.3s ease;
     }
 
-    /* Hamburger button for mobile */
     .sidebar-toggle {
       display: none;
       position: fixed;
@@ -76,7 +70,6 @@
       background: #2a2a4e;
     }
 
-    /* Overlay */
     .sidebar-overlay {
       display: none;
       position: fixed;
@@ -91,7 +84,6 @@
       display: block;
     }
 
-    /* Cards */
     .card-note {
       border: 1px solid #e0e0e0;
       border-radius: 12px;
@@ -113,7 +105,6 @@
       border-left: 4px solid #ffc107;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
       .sidebar {
         transform: translateX(-100%);
@@ -123,8 +114,8 @@
       }
       .main-content {
         margin-left: 0 !important;
-        padding-top: 4rem;
-        /* beri ruang untuk tombol toggle */
+        padding-top: 4.5rem;
+        /* ruang untuk tombol toggle + title */
       }
       .sidebar-toggle {
         display: block;
@@ -134,15 +125,11 @@
   @stack('styles')
 </head>
 <body>
-  <!-- Overlay -->
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-  <!-- Hamburger toggle -->
   <button class="sidebar-toggle" id="sidebarToggle">
     <i class="bi bi-list"></i>
   </button>
 
-  <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h4 class="mb-0">📝 Notes</h4>
@@ -181,7 +168,7 @@
           <i class="bi bi-person-circle"></i> Profil
         </a>
       </li>
-      @php
+      php
       $backRoute = config('notes.back_home_route', 'notes.web.home');
       @endphp
       <li class="nav-item">
@@ -192,7 +179,6 @@
     </ul>
   </nav>
 
-  <!-- Main Content -->
   <main class="main-content">
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -201,11 +187,7 @@
     </div>
     @endif
 
-    <!-- Title di kanan atas -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="mb-0">@yield('title', 'Notes')</h2>
-    </div>
-
+    {{-- Title dan area tombol aksi disediakan oleh masing-masing view --}}
     @yield('content')
   </main>
 
@@ -219,25 +201,21 @@
     function openSidebar() {
       sidebar.classList.add('open');
       overlay.classList.add('show');
-      toggleBtn.style.display = 'none'; // sembunyikan tombol toggle
+      toggleBtn.style.display = 'none';
     }
-
     function closeSidebar() {
       sidebar.classList.remove('open');
       overlay.classList.remove('show');
-      toggleBtn.style.display = ''; // tampilkan kembali tombol toggle
+      toggleBtn.style.display = '';
     }
 
     toggleBtn.addEventListener('click', openSidebar);
     document.getElementById('closeSidebarBtn')?.addEventListener('click', closeSidebar);
     overlay.addEventListener('click', closeSidebar);
 
-    // Tutup sidebar saat link diklik (mobile)
     sidebar.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', () => {
-    if (window.innerWidth <= 768) {
-    closeSidebar();
-    }
+    if (window.innerWidth <= 768) closeSidebar();
     });
     });
   </script>

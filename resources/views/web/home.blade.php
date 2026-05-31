@@ -1,16 +1,12 @@
 @extends('notes::layouts.web')
-@section('title', 'Beranda - Notes')
+@section('title', 'Beranda')
 
 @section('content')
-<div class="row mb-4">
-  <div class="col-md-8">
-    <h2>Beranda</h2>
-  </div>
-  <div class="col-md-4 text-end">
-    <a href="{{ route('notes.web.create') }}" class="btn btn-warning">
-      <i class="bi bi-plus-lg"></i> Catatan Baru
-    </a>
-  </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Beranda</h2>
+  <a href="{{ route('notes.web.create') }}" class="btn btn-warning">
+    <i class="bi bi-plus-lg"></i> Tambah Catatan
+  </a>
 </div>
 
 <div class="row">

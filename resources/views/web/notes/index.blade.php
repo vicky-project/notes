@@ -3,6 +3,9 @@
 
 @section('content')
 <div class="row mb-4">
+  <div class="col-md-8">
+    <h2>Catatan</h2>
+  </div>
   <div class="col-md-4 text-end">
     <a href="{{ route('notes.web.create') }}" class="btn btn-warning">
       <i class="bi bi-plus-lg"></i> Catatan Baru
