@@ -1,8 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Notes\Http\Controllers\NotesController; < ?php
-
+use Modules\Notes\Http\Controllers\NotesController;
 use Modules\Notes\Http\Controllers\Web\NoteController;
 use Modules\Notes\Http\Controllers\Web\DailyController;
 use Modules\Notes\Http\Controllers\Web\ReminderController;
