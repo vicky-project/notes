@@ -186,7 +186,7 @@
       @endphp
       <li class="nav-item">
         <a href="{{ route($backRoute) }}" class="nav-link">
-          <i class="bi bi-house"></i> Kembali
+          <i class="bi bi-arrow-left"></i> Kembali
         </a>
       </li>
     </ul>
