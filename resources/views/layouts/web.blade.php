@@ -168,7 +168,7 @@
           <i class="bi bi-person-circle"></i> Profil
         </a>
       </li>
-      php
+      @php
       $backRoute = config('notes.back_home_route', 'notes.web.home');
       @endphp
       <li class="nav-item">
