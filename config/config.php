@@ -9,4 +9,5 @@ return [
     'enabled' => (bool) env('GROQ_API_KEY', false),
     'api_key' => env('GROQ_API_KEY', ''),
   ],
+  'back_home_route' => 'apps.index'
 ];

@@ -181,13 +181,13 @@
           <i class="bi bi-person-circle"></i> Profil
         </a>
       </li>
+      @php
+      $backRoute = config('notes.back_home_route', 'notes.web.home');
+      @endphp
       <li class="nav-item">
-        <form method="POST" action="{{ route('logout') }}">
-          @csrf
-          <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
-            <i class="bi bi-box-arrow-right"></i> Logout
-          </button>
-        </form>
+        <a href="{{ route($backRoute) }}" class="nav-link">
+          <i class="bi bi-house"></i> Kembali
+        </a>
       </li>
     </ul>
   </nav>
@@ -200,6 +200,12 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
+
+    <!-- Title di kanan atas -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0">@yield('title', 'Notes')</h2>
+    </div>
+
     @yield('content')
   </main>
 
