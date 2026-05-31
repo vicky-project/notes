@@ -70,6 +70,10 @@
       border-radius: 8px;
       padding: 0.5rem 0.75rem;
       font-size: 1.25rem;
+      cursor: pointer;
+    }
+    .sidebar-toggle:hover {
+      background: #2a2a4e;
     }
 
     /* Overlay */
@@ -119,6 +123,8 @@
       }
       .main-content {
         margin-left: 0 !important;
+        padding-top: 4rem;
+        /* beri ruang untuk tombol toggle */
       }
       .sidebar-toggle {
         display: block;
@@ -203,20 +209,21 @@
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     const toggleBtn = document.getElementById('sidebarToggle');
-    const closeBtn = document.getElementById('closeSidebarBtn');
 
     function openSidebar() {
       sidebar.classList.add('open');
       overlay.classList.add('show');
+      toggleBtn.style.display = 'none'; // sembunyikan tombol toggle
     }
 
     function closeSidebar() {
       sidebar.classList.remove('open');
       overlay.classList.remove('show');
+      toggleBtn.style.display = ''; // tampilkan kembali tombol toggle
     }
 
     toggleBtn.addEventListener('click', openSidebar);
-    closeBtn?.addEventListener('click', closeSidebar);
+    document.getElementById('closeSidebarBtn')?.addEventListener('click', closeSidebar);
     overlay.addEventListener('click', closeSidebar);
 
     // Tutup sidebar saat link diklik (mobile)
