@@ -83,4 +83,38 @@ class NoteController extends Controller
     $this->noteService->deleteNote($id, auth()->id());
     return redirect()->route('notes.web.index')->with('success', 'Catatan berhasil dihapus.');
   }
+
+  private function checkExportEligibility(): array
+  {
+    $socialAccountService = \Modules\SocialAccount\Services\SocialAccountService::class;
+
+    if (!class_exists($socialAccountService)) {
+      return ['valid' => false,
+        'message' => 'Fitur Social Account belum tersedia.'];
+    }
+
+    $service = app($socialAccountService);
+    $socialAccounts = $service->getByUserId(auth()->id());
+
+    if (!$socialAccounts || $socialAccounts->isEmpty()) {
+      return ['valid' => false,
+        'message' => 'Tidak ada Akun Sosial yang terhubung. Hubungkan akun Telegram di menu Profile.'];
+    }
+
+    $telegram = $socialAccounts->where('provider', \Modules\SocialAccount\Enums\Provider::TELEGRAM)->first();
+    if (!$telegram || !$telegram->providerable) {
+      return ['valid' => false,
+        'message' => 'Akun Telegram belum terhubung. Hubungkan di menu Profile.'];
+    }
+
+    $telegramUserId = $telegram->telegram_id;
+    $employeeCount = Employee::where('telegram_user_id', $telegramUserId)->count();
+    if ($employeeCount === 0) {
+      return ['valid' => false,
+        'message' => 'Tidak ada karyawan yang tersedia. Silakan tambahkan karyawan terlebih dahulu.'];
+    }
+
+    return ['valid' => true,
+      'telegram_user_id' => $telegramUserId];
+  }
 }
