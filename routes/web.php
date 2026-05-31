@@ -8,7 +8,12 @@ use Modules\Notes\Http\Controllers\Web\ReminderController;
 use Modules\Notes\Http\Controllers\Web\ProfileController;
 use Modules\Notes\Http\Controllers\Web\TrashController;
 
-Route::middleware(['web', 'auth'])->prefix('notes')->name('notes.web.')->group(function () {
+$middlewares = ['auth', 'web'];
+if (class_exists($tgConnected = \Modules\Telegram\Http\Middleware\EnsureTelegramConnected::class)) {
+  $middlewares[] = $tgConnected;
+}
+
+Route::middleware($middlewares)->prefix('notes')->name('notes.web.')->group(function () {
   // Halaman khusus (spesifik) – letakkan di atas
   Route::get('/home', [NoteController::class, 'home'])->name('home');
   Route::get('/create', [NoteController::class, 'create'])->name('create');

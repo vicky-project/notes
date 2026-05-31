@@ -10,21 +10,21 @@ class ReminderController extends Controller
 {
   public function __construct(protected ReminderRepository $reminderRepository) {}
 
-  public function index() {
-    $reminders = $this->reminderRepository->getUserReminders(auth()->id());
+  public function index(Request $request) {
+    $reminders = $this->reminderRepository->getUserReminders($request->telegram_id);
     return view('notes::web.reminders', compact('reminders'));
   }
 
-  public function complete(int $id) {
-    $reminder = $this->reminderRepository->findForUser($id, auth()->id());
+  public function complete(Request $request, int $id) {
+    $reminder = $this->reminderRepository->findForUser($id, $request->telegram_id);
     if ($reminder) {
       $this->reminderRepository->complete($reminder);
     }
     return back()->with('success', 'Pengingat diselesaikan.');
   }
 
-  public function destroy(int $id) {
-    $reminder = $this->reminderRepository->findForUser($id, auth()->id());
+  public function destroy(Request $request, int $id) {
+    $reminder = $this->reminderRepository->findForUser($id, $request->telegram_id);
     if ($reminder) {
       $this->reminderRepository->delete($reminder);
     }

@@ -2,13 +2,14 @@
 
 namespace Modules\Notes\Http\Controllers\Web;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Modules\Notes\Models\Note;
 
 class ProfileController extends Controller
 {
-  public function index() {
-    $userId = auth()->id();
+  public function index(Request $request) {
+    $userId = $request->telegram_id;
     $totalNotes = Note::where('telegram_user_id', $userId)->count();
     $activeReminders = \Modules\Notes\Models\Reminder::whereHas('note', fn($q) => $q->where('telegram_user_id', $userId))
     ->where('is_completed', false)
