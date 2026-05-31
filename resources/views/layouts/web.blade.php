@@ -1,3 +1,4 @@
+<!-- Modules/Notes/Resources/views/web/layouts/app.blade.php -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -11,12 +12,14 @@
   <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
   <style>
 :root {
-    --sidebar-width: 250px;
+    --sidebar-width: 260px;
   }
     body {
       background-color: #f8f9fa;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
+
+    /* Sidebar */
     .sidebar {
       position: fixed;
       top: 0;
@@ -27,7 +30,8 @@
       color: #fff;
       padding: 1rem;
       overflow-y: auto;
-      z-index: 1000;
+      z-index: 1050;
+      transition: transform 0.3s ease;
     }
     .sidebar .nav-link {
       color: rgba(255,255,255,0.7);
@@ -44,11 +48,46 @@
     .sidebar .nav-link i {
       margin-right: 0.5rem;
     }
+
+    /* Main content */
     .main-content {
       margin-left: var(--sidebar-width);
       padding: 2rem;
       min-height: 100vh;
+      transition: margin-left 0.3s ease;
     }
+
+    /* Hamburger button for mobile */
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 1060;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      font-size: 1.25rem;
+    }
+
+    /* Overlay */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1040;
+    }
+    .sidebar-overlay.show {
+      display: block;
+    }
+
+    /* Cards */
     .card-note {
       border: 1px solid #e0e0e0;
       border-radius: 12px;
@@ -66,37 +105,45 @@
       padding: 0.25rem 0.75rem;
       font-size: 0.8rem;
     }
-    .checklist-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem;
-      border-radius: 8px;
-      transition: background 0.2s;
-    }
-    .checklist-item:hover {
-      background: #f1f3f5;
-    }
     .reminder-card {
       border-left: 4px solid #ffc107;
     }
+
+    /* Responsive */
     @media (max-width: 768px) {
       .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
       }
       .main-content {
-        margin-left: 0;
+        margin-left: 0 !important;
+      }
+      .sidebar-toggle {
+        display: block;
       }
     }
   </style>
   @stack('styles')
 </head>
 <body>
+  <!-- Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Hamburger toggle -->
+  <button class="sidebar-toggle" id="sidebarToggle">
+    <i class="bi bi-list"></i>
+  </button>
+
   <!-- Sidebar -->
-  <nav class="sidebar">
-    <h4 class="mb-4">📝 Notes</h4>
+  <nav class="sidebar" id="sidebar">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="mb-0">📝 Notes</h4>
+      <button class="btn btn-sm btn-outline-light d-md-none" id="closeSidebarBtn">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
     <ul class="nav flex-column">
       <li class="nav-item">
         <a href="{{ route('notes.web.home') }}" class="nav-link {{ request()->routeIs('notes.web.home') ? 'active' : '' }}">
@@ -104,7 +151,7 @@
         </a>
       </li>
       <li class="nav-item">
-        <a href="{{ route('notes.web.index') }}" class="nav-link {{ request()->routeIs('notes.web.*') && !request()->routeIs('notes.web.daily', 'notes.web.reminders', 'notes.web.profile', 'notes.web.trash', 'notes.web.home') ? 'active' : '' }}">
+        <a href="{{ route('notes.web.index') }}" class="nav-link {{ request()->routeIs('notes.web.index') ? 'active' : '' }}">
           <i class="bi bi-journals"></i> Catatan
         </a>
       </li>
@@ -141,11 +188,46 @@
 
   <!-- Main Content -->
   <main class="main-content">
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      {{ session('success') }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
     @yield('content')
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const closeBtn = document.getElementById('closeSidebarBtn');
+
+    function openSidebar() {
+      sidebar.classList.add('open');
+      overlay.classList.add('show');
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('show');
+    }
+
+    toggleBtn.addEventListener('click', openSidebar);
+    closeBtn?.addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
+
+    // Tutup sidebar saat link diklik (mobile)
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+    if (window.innerWidth <= 768) {
+    closeSidebar();
+    }
+    });
+    });
+  </script>
   @stack('scripts')
 </body>
 </html>
