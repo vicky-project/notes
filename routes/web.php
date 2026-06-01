@@ -13,7 +13,7 @@ if (class_exists($tgConnected = \Modules\Telegram\Http\Middleware\EnsureTelegram
   $middlewares[] = $tgConnected;
 }
 
-Route::middleware($middlewares)->prefix('notes')->name('notes.web.')->group(function () {
+Route::middleware($middlewares)->prefix('notes')->name('notes.')->group(function () {
   // Halaman khusus (spesifik) – letakkan di atas
   Route::get('/home', [NoteController::class, 'home'])->name('home');
   Route::get('/create', [NoteController::class, 'create'])->name('create');

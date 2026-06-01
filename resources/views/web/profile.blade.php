@@ -29,7 +29,7 @@
           <span class="badge bg-warning text-dark">{{ $activeReminders }}</span>
         </div>
 
-        <a href="{{ route('notes.web.trash') }}" class="btn btn-outline-secondary w-100 mb-2">
+        <a href="{{ route('notes.trash') }}" class="btn btn-outline-secondary w-100 mb-2">
           <i class="bi bi-trash"></i> Trash
         </a>
 

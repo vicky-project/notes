@@ -35,12 +35,12 @@ return 2;
       </div>
       <div class="d-flex gap-2">
         @if(!$reminder->is_completed)
-        <form action="{{ route('notes.web.reminders.complete', $reminder->id) }}" method="POST">
+        <form action="{{ route('notes.reminders.complete', $reminder->id) }}" method="POST">
           @csrf @method('PATCH')
           <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg"></i></button>
         </form>
         @endif
-        <form action="{{ route('notes.web.reminders.destroy', $reminder->id) }}" method="POST" onsubmit="return confirm('Hapus pengingat ini?')">
+        <form action="{{ route('notes.reminders.destroy', $reminder->id) }}" method="POST" onsubmit="return confirm('Hapus pengingat ini?')">
           @csrf @method('DELETE')
           <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
         </form>
