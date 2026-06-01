@@ -230,37 +230,37 @@
     </div>
     <ul class="nav flex-column">
       <li class="nav-item">
-        <a href="{{ route('notes.web.home') }}" class="nav-link {{ request()->routeIs('notes.web.home') ? 'active' : '' }}">
+        <a href="{{ route('notes.home') }}" class="nav-link {{ request()->routeIs('notes.home') ? 'active' : '' }}">
           <i class="bi bi-house-door"></i> Beranda
         </a>
       </li>
       <li class="nav-item">
-        <a href="{{ route('notes.web.index') }}" class="nav-link {{ request()->routeIs('notes.web.index') ? 'active' : '' }}">
+        <a href="{{ route('notes.index') }}" class="nav-link {{ request()->routeIs('notes.index') ? 'active' : '' }}">
           <i class="bi bi-journals"></i> Catatan
         </a>
       </li>
       <li class="nav-item">
-        <a href="{{ route('notes.web.daily') }}" class="nav-link {{ request()->routeIs('notes.web.daily') ? 'active' : '' }}">
+        <a href="{{ route('notes.daily') }}" class="nav-link {{ request()->routeIs('notes.daily') ? 'active' : '' }}">
           <i class="bi bi-calendar3"></i> Daily
         </a>
       </li>
       <li class="nav-item">
-        <a href="{{ route('notes.web.reminders') }}" class="nav-link {{ request()->routeIs('notes.web.reminders') ? 'active' : '' }}">
+        <a href="{{ route('notes.reminders') }}" class="nav-link {{ request()->routeIs('notes.reminders') ? 'active' : '' }}">
           <i class="bi bi-bell"></i> Pengingat
         </a>
       </li>
       <li class="nav-item">
-        <a href="{{ route('notes.web.trash') }}" class="nav-link {{ request()->routeIs('notes.web.trash') ? 'active' : '' }}">
+        <a href="{{ route('notes.trash') }}" class="nav-link {{ request()->routeIs('notes.trash') ? 'active' : '' }}">
           <i class="bi bi-trash"></i> Trash
         </a>
       </li>
       <li class="nav-item mt-4">
-        <a href="{{ route('notes.web.profile') }}" class="nav-link {{ request()->routeIs('notes.web.profile') ? 'active' : '' }}">
+        <a href="{{ route('notes.profile') }}" class="nav-link {{ request()->routeIs('notes.profile') ? 'active' : '' }}">
           <i class="bi bi-person-circle"></i> Profil
         </a>
       </li>
       @php
-      $backRoute = config('notes.back_home_route', 'notes.web.home');
+      $backRoute = config('notes.back_home_route', 'notes.home');
       @endphp
       <li class="nav-item">
         <a href="{{ route($backRoute) }}" class="nav-link">
