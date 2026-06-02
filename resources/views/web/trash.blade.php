@@ -20,13 +20,13 @@
         </div>
       </div>
       <div class="d-flex gap-2">
-        <form action="{{ route('notes.web.trash.restore', $note->id) }}" method="POST">
+        <form action="{{ route('notes.trash.restore', $note->id) }}" method="POST">
           @csrf @method('PATCH')
           <button type="submit" class="btn btn-sm btn-outline-success" title="Pulihkan">
             <i class="bi bi-arrow-counterclockwise"></i>
           </button>
         </form>
-        <form action="{{ route('notes.web.trash.force-delete', $note->id) }}" method="POST" onsubmit="return confirm('Hapus permanen?')">
+        <form action="{{ route('notes.trash.force-delete', $note->id) }}" method="POST" onsubmit="return confirm('Hapus permanen?')">
           @csrf @method('DELETE')
           <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Permanen">
             <i class="bi bi-trash-fill"></i>

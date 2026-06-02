@@ -4,7 +4,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h2 class="mb-0">Daily</h2>
-  <a href="{{ route('notes.web.create', ['date' => $date]) }}" class="btn btn-warning">
+  <a href="{{ route('notes.create', ['date' => $date]) }}" class="btn btn-warning">
     <i class="bi bi-plus-lg"></i> Catatan Baru
   </a>
 </div>
@@ -19,7 +19,7 @@
         <h5>{{ \Carbon\Carbon::parse($date)->translatedFormat('l, d F Y') }}</h5>
 
         <!-- Quick Capture -->
-        <form action="{{ route('notes.web.store') }}" method="POST" class="mb-3">
+        <form action="{{ route('notes.store') }}" method="POST" class="mb-3">
           @csrf
           <input type="hidden" name="note_date" value="{{ $date }}">
           <input type="hidden" name="type" value="text">
@@ -30,7 +30,7 @@
         </form>
 
         @forelse($notes as $note)
-        <div class="card card-note mb-2" onclick="window.location='{{ route('notes.web.show', $note->id) }}'">
+        <div class="card card-note mb-2" onclick="window.location='{{ route('notes.show', $note->id) }}'">
           <div class="card-body">
             <h6>{{ $note->title }}</h6>
             @if($note->content)
@@ -81,7 +81,7 @@
   if (btn) {
   const dateDiv = btn.closest('[data-vc-date]');
   if (dateDiv && dateDiv.dataset.vcDate) {
-  window.location.href = '{{ route('notes.web.daily') }}?date=' + dateDiv.dataset.vcDate;
+  window.location.href = '{{ route('notes.daily') }}?date=' + dateDiv.dataset.vcDate;
   }
   }
   },

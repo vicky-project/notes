@@ -4,7 +4,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h2 class="mb-0">Beranda</h2>
-  <a href="{{ route('notes.web.create') }}" class="btn btn-warning">
+  <a href="{{ route('notes.create') }}" class="btn btn-warning">
     <i class="bi bi-plus-lg"></i> Tambah Catatan
   </a>
 </div>
@@ -14,7 +14,7 @@
     <!-- Quick Capture -->
     <div class="card mb-4">
       <div class="card-body">
-        <form action="{{ route('notes.web.store') }}" method="POST">
+        <form action="{{ route('notes.store') }}" method="POST">
           @csrf
           <input type="hidden" name="type" value="text">
           <div class="input-group">
@@ -28,7 +28,7 @@
     <!-- Recent Notes -->
     <h5>📝 Catatan Terbaru</h5>
     @forelse($notes as $note)
-    <div class="card card-note mb-2" onclick="window.location='{{ route('notes.web.show', $note->id) }}'">
+    <div class="card card-note mb-2" onclick="window.location='{{ route('notes.show', $note->id) }}'">
       <div class="card-body">
         <h6>{{ $note->title }}</h6>
         @if($note->content)
@@ -63,7 +63,7 @@
       <div class="card-body">
         <h6>{{ $reminder->note->title ?? 'Tanpa Judul' }}</h6>
         <small class="text-muted">{{ $reminder->remind_at->translatedFormat('d M Y, H:i') }}</small>
-        <form action="{{ route('notes.web.reminders.complete', $reminder->id) }}" method="POST" class="mt-2">
+        <form action="{{ route('notes.reminders.complete', $reminder->id) }}" method="POST" class="mt-2">
           @csrf
           @method('PATCH')
           <button type="submit" class="btn btn-sm btn-outline-success">✓ Selesaikan</button>

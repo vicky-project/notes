@@ -10,8 +10,8 @@ class NoteController extends Controller
 {
   public function __construct(protected NoteService $noteService) {}
 
-  public function home() {
-    $userId = auth()->id();
+  public function home(Request $request) {
+    $userId = $request->telegram_id;
     $notes = $this->noteService->listNotes($userId, ['per_page' => 5]);
     $reminders = app(\Modules\Notes\Repositories\ReminderRepository::class)->getUserReminders($userId);
 
@@ -19,7 +19,7 @@ class NoteController extends Controller
   }
 
   public function index(Request $request) {
-    $userId = auth()->id();
+    $userId = $request->telegram_id;
     $notes = $this->noteService->listNotes($userId, [
       'search' => $request->get('search'),
       'tag' => $request->get('tag'),
@@ -31,7 +31,7 @@ class NoteController extends Controller
   }
 
   public function create(Request $request) {
-    $allTags = \Modules\Notes\Models\Tag::where('telegram_user_id', auth()->id())->orderBy('name')->get();
+    $allTags = \Modules\Notes\Models\Tag::where('telegram_user_id', $request->telegram_id)->orderBy('name')->get();
     return view('notes::web.notes.create', [
       'allTags' => $allTags,
       'defaultDate' => $request->get('date'),
@@ -48,19 +48,19 @@ class NoteController extends Controller
       'reminder_at' => 'nullable|date',
     ]);
 
-    $this->noteService->createNote(auth()->id(), $validated);
+    $this->noteService->createNote($request->telegram_id, $validated);
 
     return redirect()->route('notes.web.index')->with('success', 'Catatan berhasil dibuat.');
   }
 
-  public function show(int $id) {
-    $note = $this->noteService->getNote($id, auth()->id());
+  public function show(Request $request, int $id) {
+    $note = $this->noteService->getNote($id, $request->telegram_id);
     return view('notes::web.notes.show', compact('note'));
   }
 
-  public function edit(int $id) {
-    $note = $this->noteService->getNote($id, auth()->id());
-    $allTags = \Modules\Notes\Models\Tag::where('telegram_user_id', auth()->id())->orderBy('name')->get();
+  public function edit(Request $request, int $id) {
+    $note = $this->noteService->getNote($id, $request->telegram_id);
+    $allTags = \Modules\Notes\Models\Tag::where('telegram_user_id', $request->telegram_id)->orderBy('name')->get();
     return view('notes::web.notes.edit', compact('note', 'allTags'));
   }
 
@@ -74,47 +74,13 @@ class NoteController extends Controller
       'reminder_at' => 'nullable|date',
     ]);
 
-    $this->noteService->updateNote($id, auth()->id(), $validated);
+    $this->noteService->updateNote($id, $request->telegram_id, $validated);
 
     return redirect()->route('notes.web.show', $id)->with('success', 'Catatan berhasil diperbarui.');
   }
 
-  public function destroy(int $id) {
-    $this->noteService->deleteNote($id, auth()->id());
+  public function destroy(Request $request, int $id) {
+    $this->noteService->deleteNote($id, $request->telegram_id);
     return redirect()->route('notes.web.index')->with('success', 'Catatan berhasil dihapus.');
-  }
-
-  private function checkExportEligibility(): array
-  {
-    $socialAccountService = \Modules\SocialAccount\Services\SocialAccountService::class;
-
-    if (!class_exists($socialAccountService)) {
-      return ['valid' => false,
-        'message' => 'Fitur Social Account belum tersedia.'];
-    }
-
-    $service = app($socialAccountService);
-    $socialAccounts = $service->getByUserId(auth()->id());
-
-    if (!$socialAccounts || $socialAccounts->isEmpty()) {
-      return ['valid' => false,
-        'message' => 'Tidak ada Akun Sosial yang terhubung. Hubungkan akun Telegram di menu Profile.'];
-    }
-
-    $telegram = $socialAccounts->where('provider', \Modules\SocialAccount\Enums\Provider::TELEGRAM)->first();
-    if (!$telegram || !$telegram->providerable) {
-      return ['valid' => false,
-        'message' => 'Akun Telegram belum terhubung. Hubungkan di menu Profile.'];
-    }
-
-    $telegramUserId = $telegram->telegram_id;
-    $employeeCount = Employee::where('telegram_user_id', $telegramUserId)->count();
-    if ($employeeCount === 0) {
-      return ['valid' => false,
-        'message' => 'Tidak ada karyawan yang tersedia. Silakan tambahkan karyawan terlebih dahulu.'];
-    }
-
-    return ['valid' => true,
-      'telegram_user_id' => $telegramUserId];
   }
 }
